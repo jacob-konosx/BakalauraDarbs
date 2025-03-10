@@ -56,7 +56,7 @@ def zimet_karti(tif):
     m = folium.Map(location=[center_lat, center_lon], zoom_start=20)
 
     folium.TileLayer(
-        tiles="https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}@2x?access_token=" + st.secrets.MAPBOX_ACCESS_TOKEN,
+        tiles="https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}@2x?access_token=" + st.secrets.mapbox_access_token,
         attr="Mapbox",
         name="Satellite",
         overlay=False,
