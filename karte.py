@@ -1,12 +1,16 @@
 import rasterio, folium, base64
 import numpy as np
 import streamlit as st
-from streamlit_folium import folium_static
+import branca.colormap as cm
+from streamlit_folium import st_folium
 from folium.raster_layers import ImageOverlay
 from pyproj import Transformer
 from PIL import Image
-
 from io import BytesIO
+
+def temp_krasa(temp, min_temp=0, max_temp=40):
+    colormap = cm.linear.YlOrRd_09.scale(min_temp, max_temp)
+    return colormap(temp)
 
 def zimet_karti(tif):
     # Atver GeoTIF failu ar rosterio
@@ -44,7 +48,7 @@ def zimet_karti(tif):
     img = Image.fromarray(image_rgba, "RGBA")
 
     buffered = BytesIO()
-    img.save(buffered, format="PNG")
+    img.save(buffered, format="PNG", optimized=True)
     # Konvertēt bonaro attēlu formātu uz virknes
     img_str = base64.b64encode(buffered.getvalue()).decode()
 
@@ -61,8 +65,21 @@ def zimet_karti(tif):
         name="Satellite",
         overlay=False,
         control=True,
-        max_zoom=22
+        max_zoom=30
     ).add_to(m)
+
+
+    for punkts in st.session_state.temp_punkti:
+        folium.Circle(
+            location=[punkts["lat"], punkts["lon"]],
+            radius=5,
+            color=temp_krasa(punkts["temp"]),
+            fill=True,
+            fill_color=temp_krasa(punkts["temp"]),
+            fill_opacity=0.2,
+            popup=f"Teperatūra: {punkts['temp']}°C",
+            weight=1
+        ).add_to(m)
 
     # Pievienot GeoTIFF pārklājumu virs karti
     ImageOverlay(
@@ -78,4 +95,22 @@ def zimet_karti(tif):
     # Pievienot slāņu kontroli
     folium.LayerControl().add_to(m)
 
-    folium_static(m)
+    kartes_dati = st_folium(m, width=1000)
+
+    last_clicked = None
+    if kartes_dati and kartes_dati.get("last_clicked"):
+        lat = kartes_dati["last_clicked"]["lat"]
+        lon = kartes_dati["last_clicked"]["lng"]
+        last_clicked = (lat, lon)
+
+    if last_clicked:
+        temp = st.number_input(f"Temperatūra (°C) punktā {last_clicked}", min_value=-50, max_value=50, step=1, value=0)
+
+        if st.button("Pievienot temperatūas punktu"):
+            st.session_state.temp_punkti.append({
+                "lat": last_clicked[0],
+                "lon": last_clicked[1],
+                "temp": temp
+            })
+
+            st.rerun()

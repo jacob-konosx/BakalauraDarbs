@@ -90,7 +90,11 @@ if faili:
 
             atteli = [("images", (fails.name, fails.getvalue(), fails.type)) for fails in faili]
             options = json.dumps([
-                {'name': "orthophoto-resolution", 'value': 24}
+                {'name': "sfm-algorithm", 'value': "planar"},
+                {'name': "fast-orthophoto", 'value': True},
+                {'name': "matcher-neighbors", 'value': 4},
+                {'name': "pc-quality", 'value': "high"},
+                {'name': "orthophoto-resolution", 'value': "3.0"}
             ])
 
             res = requests.post(f"{st.secrets.webodm_url}/api/projects/{st.secrets.webodm_project_id}/tasks/",

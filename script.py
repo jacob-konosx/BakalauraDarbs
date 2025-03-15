@@ -1,5 +1,10 @@
 import streamlit as st
 
+st.set_page_config(layout="wide")
+
+if "temp_punkti" not in st.session_state:
+    st.session_state.temp_punkti = []
+
 def pierakstisanas_logs():
     st.header("Šī aplikācija ir privāta.")
     st.subheader("Lūdzu pierakstieties.")
