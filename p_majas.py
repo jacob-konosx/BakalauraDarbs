@@ -5,9 +5,13 @@ from karte import zimet_karti
 
 def savienotWebODM():
     try:
-        res = requests.post(f"{st.secrets.webodm_url}/api/token-auth/",
-                    data={'username': st.secrets.webodm_username,
-                        'password': st.secrets.webodm_password}).json()
+        res = requests.post(f"{
+            st.secrets.webodm_url}/api/token-auth/",
+            data={
+                'username': st.secrets.webodm_username,
+                'password': st.secrets.webodm_password
+            }
+        ).json()
 
         if "token" in res:
             return res['token']

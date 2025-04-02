@@ -4,33 +4,6 @@ import streamlit as st
 from dati import zimet_sensora_datus, ieladet_sensora_datus
 from karte import izveidot_karti
 
-KARTES_AUGSTUMS = 600
-
-def iestadit_state():
-    st.session_state.tif_fails = None
-    st.session_state.tif_datums = None
-    st.session_state.tif_laiks = None
-    st.session_state.spiediena_rezims = False
-    st.session_state.izveleta_koordinate = None
-    st.session_state.tif_sensora_dati = []
-    st.session_state.ierices = {}
-    st.session_state.datu_slani = []
-    st.session_state.karte = None
-
-def apstiprinat_koordinatu(izveleta_ierice):
-    st.session_state.spiediena_rezims = False
-    st.session_state.ierices[izveleta_ierice]["koordinatas"] = st.session_state.izveleta_koordinate
-    st.session_state.izveleta_koordinate = None
-
-def tif_datuma_izmaina():
-    st.session_state.tif_laiks = None
-    st.session_state.spiediena_rezims = False
-    st.session_state.izveleta_koordinate = None
-    st.session_state.ierices = {}
-
-if "tif_fails" not in st.session_state:
-    iestadit_state()
-
 st.markdown(
     """
     <style>
@@ -56,9 +29,65 @@ st.markdown(
     <style>
     """, unsafe_allow_html=True)
 
-st.title("Aprstādāt TIF failu")
+KARTES_AUGSTUMS = 600
+
+def uzstadit_state():
+    st.session_state.tif_fails = None
+    st.session_state.tif_datums = None
+    st.session_state.tif_laiks = None
+    st.session_state.spiediena_rezims = False
+    st.session_state.izveleta_koordinate = None
+    st.session_state.tif_sensora_dati = []
+    st.session_state.ierices = {}
+    st.session_state.datu_slani = []
+    st.session_state.kartes_key = 1
+
+def apstiprinat_koordinatu(izveleta_ierice):
+    st.session_state.spiediena_rezims = False
+    st.session_state.ierices[izveleta_ierice]["koordinatas"] = st.session_state.izveleta_koordinate
+    st.session_state.izveleta_koordinate = None
+
+def tif_datuma_izmaina():
+    st.session_state.tif_laiks = None
+    st.session_state.spiediena_rezims = False
+    st.session_state.izveleta_koordinate = None
+    st.session_state.ierices = {}
+
+if "tif_datums" not in st.session_state:
+    uzstadit_state()
+
+@st.fragment
+def renderet_karti():
+    m = izveidot_karti(
+        st.session_state.ir_satelita_flizes,
+        st.session_state.izveleta_koordinate,
+        st.session_state.ierices,
+        st.session_state.tif_laiks
+    )
+
+    if st.session_state.spiediena_rezims:
+        kartes_dati = st_folium(
+            m,
+            width=None,
+            height=KARTES_AUGSTUMS,
+            key=st.session_state.kartes_key
+        )
+
+        if not st.session_state.izveleta_koordinate:
+            st.toast("Izvēlaties koordinātu kartē!", icon="🗺️")
+
+        if kartes_dati.get("last_clicked") :
+            lat = kartes_dati["last_clicked"]["lat"]
+            lon = kartes_dati["last_clicked"]["lng"]
+            st.session_state.izveleta_koordinate = [lat, lon]
+
+            st.rerun(scope="fragment")
+    else:
+        folium_static(m, width=None, height=KARTES_AUGSTUMS)
+
+st.title("Apstrādāt TIF failu")
 if st.session_state.tif_fails:
-    ieladet_sensora_datus(st.session_state.tif_datums)
+    st.session_state.tif_sensora_dati = ieladet_sensora_datus(st.session_state.tif_datums)
 
     col1, col2, col3, col4 = st.columns([3, 3, 8, 1])
     with col1:
@@ -66,7 +95,7 @@ if st.session_state.tif_fails:
     with col2:
         st.time_input("Sensora datu laiks:", key="tif_laiks")
     with col4:
-        st.button("❌", on_click=iestadit_state)
+        st.button("❌", on_click=uzstadit_state)
 
     kartes_konteineris = st.container()
 
@@ -86,29 +115,10 @@ if st.session_state.tif_fails:
         st.error(f"Sensora dati nav pieejami datumā: {st.session_state.tif_datums}")
 
     with kartes_konteineris:
-        m = izveidot_karti(
-            st.session_state.ir_satelita_flizes,
-            st.session_state.izveleta_koordinate,
-            st.session_state.ierices,
-            st.session_state.tif_laiks
-        )
-
-        if st.session_state.spiediena_rezims:
-            kartes_dati = st_folium(m, width=None, height=KARTES_AUGSTUMS, key="karte")
-
-            st.write(st.session_state.karte)
-            if not st.session_state.izveleta_koordinate:
-                st.toast("Izvēlaties koordinātu kartē!", icon="🗺️")
-
-            if kartes_dati.get("last_clicked") :
-                lat = kartes_dati["last_clicked"]["lat"]
-                lon = kartes_dati["last_clicked"]["lng"]
-                st.session_state.izveleta_koordinate = [lat, lon]
-        else:
-            folium_static(m, width=None, height=KARTES_AUGSTUMS)
+        renderet_karti()
 else:
     tif_fails = st.file_uploader("Izvēlieties failu:", type=["tif"], accept_multiple_files=False)
-    tif_datums = st.date_input("Izvēlaties bildes uzņemšanas datumu:", value=datetime.date(2023, 7, 22),  format="DD.MM.YYYY")
+    tif_datums = st.date_input("Izvēlaties bildes uzņemšanas datumu:", value=datetime.date(2023, 7, 23),  format="DD.MM.YYYY")
 
     if tif_fails and tif_datums:
         st.button("Apstiprināt datus", icon="💾", on_click=lambda: st.session_state.update({"tif_fails": tif_fails, "tif_datums": tif_datums}))
