@@ -2,17 +2,22 @@ import rasterio, folium, base64
 import numpy as np
 import streamlit as st
 import branca.colormap as cm
-from streamlit_folium import st_folium
 from folium.raster_layers import ImageOverlay
 from pyproj import Transformer
 from PIL import Image
 from io import BytesIO
+from datetime import datetime
 
-def temp_krasa(temp, min_temp=0, max_temp=40):
-    colormap = cm.linear.YlOrRd_09.scale(min_temp, max_temp)
-    return colormap(temp)
 
-def zimet_karti(tif):
+@st.cache_data
+def temp_krasa(temp, tips):
+    min_temp, max_temp = (0, 40) if "temp" in tips else (0, 100)
+    krasa = cm.linear.YlOrRd_09.scale(min_temp, max_temp)
+
+    return krasa(float(temp))
+
+@st.cache_data(show_spinner="Tiek ielādēti TIF dati")
+def ieladet_datus(tif):
     # Atver GeoTIF failu ar rosterio
     with rasterio.open(tif) as src:
         # Dabū TIF robežas
@@ -29,14 +34,14 @@ def zimet_karti(tif):
     right_lon, top_lat = transformer.transform(robeza.right, robeza.top)
 
     # Aprēķināt attēla centru
-    center_lon = (left_lon + right_lon) / 2
-    center_lat = (bottom_lat + top_lat) / 2
+    centra_lon = (left_lon + right_lon) / 2
+    centra_lat = (bottom_lat + top_lat) / 2
 
     # Izveidot folium robežas
     folium_robeza = [[bottom_lat, left_lon], [top_lat, right_lon]]
 
     # Pārvērst attēlu masīvu uz numpy
-    attels = np.transpose(attels, (1, 2, 0))  # Izmainīt attēla formu (bands, height, width) uz (height, width, bands)
+    attels = np.moveaxis(attels, 0, -1)  # Izmainīt attēla formu (bands, height, width) uz (height, width, bands)
 
     #Izveidot alfa kanālu, kur melns (0,0,0) ir TIF vietas, kur nav dati
     alpha_channel = np.where((attels == [0, 0, 0]).all(axis=-1), 0, 255).astype(np.uint8)
@@ -55,62 +60,86 @@ def zimet_karti(tif):
     # Izveidot datu URL
     data_url = f"data:image/png;base64,{img_str}"
 
+    return centra_lat, centra_lon, data_url, folium_robeza
+
+@st.cache_data(show_spinner="Tiek ģenerēta karte")
+def izveidot_karti(ir_satelita_flizes, izveleta_koordinate, ierices, tif_laiks):
+    centra_lat, centra_lon, data_url, folium_robeza = ieladet_datus(st.session_state.tif_fails)
 
     # Izveidot Folium karti contrtu uz TIF centru
-    m = folium.Map(location=[center_lat, center_lon], zoom_start=20)
+    m = folium.Map(location=[centra_lat, centra_lon], zoom_start=21, max_zoom=25, min_zoom=19, max_bounds=True)
 
-    folium.TileLayer(
-        tiles="https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}@2x?access_token=" + st.secrets.mapbox_access_token,
-        attr="Mapbox",
-        name="Satellite",
-        overlay=False,
-        control=True,
-        max_zoom=30
-    ).add_to(m)
+    if ir_satelita_flizes:
+        folium.TileLayer(
+            tiles="https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}@2x?access_token=" + st.secrets.mapbox_access_token,
+            attr="Mapbox",
+            name="Satellite",
+            overlay=False,
+            control=True,
+            max_zoom=25
+        ).add_to(m)
 
+    if len(ierices) > 0:
+        slani = {}
+        for slanis in st.session_state.datu_slani:
+            slani[slanis] = folium.FeatureGroup(name=slanis, show=True if "air temperature" in slanis else False).add_to(m)
 
-    for punkts in st.session_state.temp_punkti:
+        for ierices_id, ierices_dati in ierices.items():
+            if ierices_dati["koordinatas"]:
+                datu_ieraksts = None
+
+                for ieraksts in ierices_dati["dati"]:
+                    s_date_datetime = datetime.strptime(ieraksts["s_date"], "%Y-%m-%dT%H:%M:%SZ")
+
+                    if s_date_datetime.minute == tif_laiks.minute and s_date_datetime.hour == tif_laiks.hour:
+                        datu_ieraksts = ieraksts
+                        break
+
+                if datu_ieraksts:
+                    for datu_tips in datu_ieraksts:
+                        dati = datu_ieraksts[datu_tips]
+
+                        if datu_tips in st.session_state.datu_slani and dati:
+                            folium.Circle(
+                                location=ierices_dati["koordinatas"],
+                                radius=4 if "soil" in datu_tips else 5,
+                                color=temp_krasa(dati, datu_tips),
+                                fill=True,
+                                fill_color=temp_krasa(dati, datu_tips),
+                                fill_opacity=0.2,
+                                popup=f"{datu_tips}: {dati}",
+                                weight=1
+                            ).add_to(slani.get(datu_tips))
+
+                folium.Circle(
+                    location=ierices_dati["koordinatas"],
+                    radius=0.2,
+                    fill_opacity=0,
+                    popup=f"Ierīce: {ierices_id}, Koordinātas: {ierices_dati['koordinatas']}",
+                    fill=True,
+                    zindex=2
+                ).add_to(m)
+
+    if izveleta_koordinate:
         folium.Circle(
-            location=[punkts["lat"], punkts["lon"]],
-            radius=5,
-            color=temp_krasa(punkts["temp"]),
-            fill=True,
-            fill_color=temp_krasa(punkts["temp"]),
-            fill_opacity=0.2,
-            popup=f"Teperatūra: {punkts['temp']}°C",
-            weight=1
+            location=izveleta_koordinate,
+            radius=0.2,
+            fill_opacity = 1,
+            color="#bd0026ff"
         ).add_to(m)
 
     # Pievienot GeoTIFF pārklājumu virs karti
     ImageOverlay(
-        name="Orthophoto",
+        name="Ortofoto",
         image=data_url,
         bounds=folium_robeza,
         opacity=1,
         interactive=True,
         cross_origin=False,
         zindex=1,
+        max_zoom=30
     ).add_to(m)
 
-    # Pievienot slāņu kontroli
     folium.LayerControl().add_to(m)
 
-    kartes_dati = st_folium(m, width=1000)
-
-    last_clicked = None
-    if kartes_dati and kartes_dati.get("last_clicked"):
-        lat = kartes_dati["last_clicked"]["lat"]
-        lon = kartes_dati["last_clicked"]["lng"]
-        last_clicked = (lat, lon)
-
-    if last_clicked:
-        temp = st.number_input(f"Temperatūra (°C) punktā {last_clicked}", min_value=-50, max_value=50, step=1, value=0)
-
-        if st.button("Pievienot temperatūas punktu"):
-            st.session_state.temp_punkti.append({
-                "lat": last_clicked[0],
-                "lon": last_clicked[1],
-                "temp": temp
-            })
-
-            st.rerun()
+    return m

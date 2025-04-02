@@ -24,7 +24,6 @@ if "token" not in st.session_state:
     st.session_state.task_id = None
     st.session_state.task_progresa = None
 
-
 if st.session_state.token:
     if not st.session_state.toast_paradits:
         st.toast("WebODM savienots veiksmīgi.", icon="✅")
@@ -61,10 +60,9 @@ st.markdown(
     <style>
     """, unsafe_allow_html=True)
 
+faili = None
 if st.session_state.tif:
-    zimet_karti(st.session_state.tif)
-
-    col1, col2 = st.columns([4, 0.4])
+    col1, col2 = st.columns([5, 0.4])
 
     with col1:
         st.download_button(
@@ -80,41 +78,39 @@ if st.session_state.tif:
             st.session_state.tif = None
             st.rerun()
 
-faili = st.file_uploader("Izvēlieties failus:", type=["jpg"], accept_multiple_files=True, key=st.session_state.uploader_key)
+    zimet_karti(st.session_state.tif)
+else:
+    faili = st.file_uploader("Izvēlieties failus:", type=["jpg"], accept_multiple_files=True, key=st.session_state.uploader_key)
 
 if faili:
     if st.button("📤 Ģenerēt karti"):
-        if not faili:
-            st.error("⚠️ Lūdzu augšupielādējiet vismaz vienu attēlu!")
+        atteli = [("images", (fails.name, fails.getvalue(), fails.type)) for fails in faili]
+        options = json.dumps([
+            {'name': "sfm-algorithm", 'value': "planar"},
+            {'name': "fast-orthophoto", 'value': True},
+            {'name': "matcher-neighbors", 'value': 4},
+            {'name': "pc-quality", 'value': "high"},
+            {'name': "orthophoto-resolution", 'value': "2.0"}
+        ])
+
+        res = requests.post(f"{st.secrets.webodm_url}/api/projects/{st.secrets.webodm_project_id}/tasks/",
+                headers=HEADERS,
+                files=atteli,
+                data={
+                    'options': options
+                }
+            )
+
+        data = res.json()
+
+        if res.status_code == 201:
+            st.toast("Attēli veiksmīgi augšupielādēti WebODM.", icon="📤")
+
+            st.session_state.task_id = data["id"]
+            st.session_state.task_progresa = True
         else:
-
-            atteli = [("images", (fails.name, fails.getvalue(), fails.type)) for fails in faili]
-            options = json.dumps([
-                {'name': "sfm-algorithm", 'value': "planar"},
-                {'name': "fast-orthophoto", 'value': True},
-                {'name': "matcher-neighbors", 'value': 4},
-                {'name': "pc-quality", 'value': "high"},
-                {'name': "orthophoto-resolution", 'value': "3.0"}
-            ])
-
-            res = requests.post(f"{st.secrets.webodm_url}/api/projects/{st.secrets.webodm_project_id}/tasks/",
-                    headers=HEADERS,
-                    files=atteli,
-                    data={
-                        'options': options
-                    }
-                )
-
-            data = res.json()
-
-            if res.status_code == 201:
-                st.toast("Attēli veiksmīgi augšupielādēti WebODM.", icon="📤")
-
-                st.session_state.task_id = data["id"]
-                st.session_state.task_progresa = True
-            else:
-                st.toast(f"❌ Kļūda failu augšuplādē: {res.status_code}")
-        faili = None
+            st.toast(f"❌ Kļūda failu augšuplādē: {res.status_code}")
+    faili = None
 
 if st.session_state.task_progresa:
     progresa_text = "Notiek kartes izveidošana. Lūdzu uzgaidiet."
