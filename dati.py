@@ -19,7 +19,7 @@ def ieladet_sensora_datus(tif_datums):
 
     if not len(sensora_dati["items"]) == 0:
         sensoru_datu_saraksts += sensora_dati["items"]
-        st.session_state.datu_slani = [key for key in st.session_state.tif_sensora_dati[0] if key not in ["device id", "s_date"]]
+        st.session_state.datu_slani = [key for key in sensoru_datu_saraksts[0] if key not in ["device id", "s_date"]]
 
         pirma_ieraksta_datetime = datetime.datetime.strptime(sensora_dati["items"][0]["s_date"], "%Y-%m-%dT%H:%M:%SZ")
         st.session_state.tif_laiks = datetime.time(hour=pirma_ieraksta_datetime.hour, minute=pirma_ieraksta_datetime.minute)
@@ -27,7 +27,7 @@ def ieladet_sensora_datus(tif_datums):
         if sensora_dati["hasMore"]:
             sensoru_datu_saraksts += dabut_visus_items(sensora_dati)
 
-        for datu_ieraksts in st.session_state.tif_sensora_dati:
+        for datu_ieraksts in sensoru_datu_saraksts:
             if datu_ieraksts["device id"] not in st.session_state.ierices:
                 st.session_state.ierices[datu_ieraksts["device id"]] = {
                         "koordinatas": None,
@@ -40,15 +40,18 @@ def ieladet_sensora_datus(tif_datums):
 
 @st.cache_data(show_spinner="Tiek iegūti sensora dati")
 def dabut_sensora_datus(sensora_datu_url):
-    res = requests.get(sensora_datu_url)
+    try:
+        res = requests.get(sensora_datu_url)
 
-    if res:
-        json_res = res.json()
-        return json_res
-    else:
+        if res:
+            json_res = res.json()
+            return json_res
+        else:
+            return None
+    except requests.exceptions.RequestException:
         return None
 
-@st.cache_data
+@st.cache_data(show_spinner="Tiek iegūti sensora dati")
 def dabut_visus_items(sensora_dati):
     visi_items = []
 

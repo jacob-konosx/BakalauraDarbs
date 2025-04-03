@@ -101,6 +101,7 @@ if st.session_state.tif_fails:
 
     bez_koordinatas_ierices = [ierices_id for ierices_id, ierices_dati in st.session_state.ierices.items() if not ierices_dati["koordinatas"]]
     if len(bez_koordinatas_ierices) > 0:
+        st.warning(f"Nepieciešams izvēlēties koordinātas {len(bez_koordinatas_ierices)} ierīcēm: {', '.join(bez_koordinatas_ierices)}.")
         izveleta_ierice = st.selectbox("Izvēlies ierīci, kurai uzstādīt koordinātas:", bez_koordinatas_ierices)
 
         if not st.session_state.spiediena_rezims:
@@ -112,7 +113,7 @@ if st.session_state.tif_fails:
     if not len(st.session_state.tif_sensora_dati) == 0:
         zimet_sensora_datus(st.session_state.tif_sensora_dati)
     else:
-        st.error(f"Sensora dati nav pieejami datumā: {st.session_state.tif_datums}")
+        st.warning(f"Sensora dati nav pieejami datumā: {st.session_state.tif_datums.strftime('%d.%m.%Y')}")
 
     with kartes_konteineris:
         renderet_karti()
