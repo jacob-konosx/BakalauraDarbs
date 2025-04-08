@@ -57,8 +57,7 @@ else:
     st.toast("WebODM neizdevās savienot. Lūdzu mēģiniet vēlreiz", icon="🚨")
 
     st.warning("Bezpilota gaisa kuģu attēlu sašūšanu nodrošina WebODM API.")
-    if st.button("Savienot ar WebODM", icon="🔄"):
-        st.session_state.web_odm_talons = savienot_web_odm()
+    st.button("Savienot ar WebODM", icon="🔄", on_click=lambda: st.session_state.update(web_odm_talons=savienot_web_odm))
     st.stop()
 
 st.title("Dronu un sensoru datu ĢIS")
@@ -114,10 +113,12 @@ if st.session_state.task_progresa:
 
     progresa_josla = st.progress(0, text=progresa_text)
     while True:
-        task = requests.get(f"{st.secrets.webodm_url}/api/projects/{st.secrets.webodm_project_id}/tasks/{st.session_state.task_id}/",
+        res = requests.get(f"{st.secrets.webodm_url}/api/projects/{st.secrets.webodm_project_id}/tasks/{st.session_state.task_id}/",
             headers=st.session_state.galvene
-        ).json()
+        )
+        res.raise_for_status()
 
+        task = res.json()
         if "running_progress" in task:
             if task['status'] == 40:
                 st.toast("Karte tika veiksmīgi sašūta.", icon="✅")

@@ -12,57 +12,55 @@ def dabut_str_diapzonu(diapzona):
     return datu_str_diapzona
 
 @st.cache_data
-def ieladet_sensora_datus(tif_datums):
-    sensoru_datu_saraksts = []
-    str_diapzona = dabut_str_diapzonu([st.session_state.tif_datums, st.session_state.tif_datums + datetime.timedelta(days=1)])
-    sensora_dati = dabut_sensora_datus(st.secrets.sensoru_datu_url.format(str_diapzona[0], str_diapzona[1]))
+def ieladet_sensora_datus(visi_ieraksti):
+    st.session_state.datu_slani = [key for key in visi_ieraksti[0] if key not in ["device id", "s_date"]]
 
-    if not len(sensora_dati["items"]) == 0:
-        sensoru_datu_saraksts += sensora_dati["items"]
-        st.session_state.datu_slani = [key for key in sensoru_datu_saraksts[0] if key not in ["device id", "s_date"]]
+    pirma_ieraksta_datetime = datetime.datetime.strptime(visi_ieraksti[0]["s_date"], "%Y-%m-%dT%H:%M:%SZ")
+    st.session_state.tif_laiks = datetime.time(hour=pirma_ieraksta_datetime.hour, minute=pirma_ieraksta_datetime.minute)
 
-        pirma_ieraksta_datetime = datetime.datetime.strptime(sensora_dati["items"][0]["s_date"], "%Y-%m-%dT%H:%M:%SZ")
-        st.session_state.tif_laiks = datetime.time(hour=pirma_ieraksta_datetime.hour, minute=pirma_ieraksta_datetime.minute)
+    for datu_ieraksts in visi_ieraksti:
+        if datu_ieraksts["device id"] not in st.session_state.ierices:
+            st.session_state.ierices[datu_ieraksts["device id"]] = {
+                    "koordinatas": None,
+                    "dati": []
+                }
 
-        if sensora_dati["hasMore"]:
-            sensoru_datu_saraksts += dabut_visus_items(sensora_dati)
-
-        for datu_ieraksts in sensoru_datu_saraksts:
-            if datu_ieraksts["device id"] not in st.session_state.ierices:
-                st.session_state.ierices[datu_ieraksts["device id"]] = {
-                        "koordinatas": None,
-                        "dati": []
-                    }
-
-            st.session_state.ierices[datu_ieraksts["device id"]]["dati"].append(datu_ieraksts)
-    return sensoru_datu_saraksts
+        st.session_state.ierices[datu_ieraksts["device id"]]["dati"].append(datu_ieraksts)
 
 
 @st.cache_data(show_spinner="Tiek iegūti sensora dati")
 def dabut_sensora_datus(sensora_datu_url):
     try:
         res = requests.get(sensora_datu_url)
+        res.raise_for_status()
 
-        if res:
-            json_res = res.json()
-            return json_res
-        else:
-            return None
-    except requests.exceptions.RequestException:
+        return res.json()
+    except:
         return None
 
 @st.cache_data(show_spinner="Tiek iegūti sensora dati")
-def dabut_visus_items(sensora_dati):
-    visi_items = []
+def dabut_visus_sensora_ierakstus(sensora_datumu_diapzona):
+    visi_ieraksti = []
+    
+    try:
+        str_diapzona = dabut_str_diapzonu([sensora_datumu_diapzona[0], sensora_datumu_diapzona[1]])
+        sensora_dati = dabut_sensora_datus(st.secrets.sensoru_datu_url.format(str_diapzona[0], str_diapzona[1]))
 
-    while sensora_dati["hasMore"]:
-        jaunais_datu_url = [link for link in sensora_dati["links"] if "next" in link["rel"]]
+        if sensora_dati:
+            visi_ieraksti += sensora_dati["items"]
 
-        sensora_dati = dabut_sensora_datus(jaunais_datu_url[0]["href"])
+            while sensora_dati["hasMore"]:
+                jaunais_datu_url = [link for link in sensora_dati["links"] if "next" in link["rel"]]
 
-        visi_items += sensora_dati["items"]
+                sensora_dati = dabut_sensora_datus(jaunais_datu_url[0]["href"])
 
-    return visi_items
+                if sensora_dati:
+                    visi_ieraksti += sensora_dati["items"]
+            return visi_ieraksti
+        else:
+            return None
+    except:
+        return None
 
 def zimet_sensora_datus(sensora_dati):
     df = pd.DataFrame(sensora_dati)

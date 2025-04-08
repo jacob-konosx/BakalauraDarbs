@@ -1,7 +1,7 @@
 import datetime
 from streamlit_folium import st_folium, folium_static
 import streamlit as st
-from dati import zimet_sensora_datus, ieladet_sensora_datus
+from dati import zimet_sensora_datus, dabut_visus_sensora_ierakstus, ieladet_sensora_datus
 from karte import izveidot_karti
 
 st.markdown(
@@ -52,6 +52,7 @@ def tif_datuma_izmaina():
     st.session_state.spiediena_rezims = False
     st.session_state.izveleta_koordinate = None
     st.session_state.ierices = {}
+    st.session_state.tif_sensora_dati = []
 
 if "tif_datums" not in st.session_state:
     uzstadit_state()
@@ -86,8 +87,19 @@ def renderet_karti():
         folium_static(m, width=None, height=KARTES_AUGSTUMS)
 
 st.title("Apstrādāt TIF failu")
-if st.session_state.tif_fails:
-    st.session_state.tif_sensora_dati = ieladet_sensora_datus(st.session_state.tif_datums)
+if st.session_state.tif_datums:
+    dienas_diapzona = [st.session_state.tif_datums, st.session_state.tif_datums + datetime.timedelta(days=1)]
+    sensora_dati = dabut_visus_sensora_ierakstus(dienas_diapzona)
+
+    if sensora_dati:
+        if len(sensora_dati) > 0:
+            st.session_state.tif_sensora_dati = sensora_dati
+            ieladet_sensora_datus(st.session_state.tif_sensora_dati)
+        else:
+            st.warning(f"Sensora dati nav pieejami datuma diapzonā: {dienas_diapzona[0].strftime('%d.%m.%Y')} - {dienas_diapzona[1].strftime('%d.%m.%Y')}")
+    else:
+        st.error("Neizdevās pieprasīt sensora datus.")
+
 
     col1, col2, col3, col4 = st.columns([3, 3, 8, 1])
     with col1:
@@ -109,11 +121,10 @@ if st.session_state.tif_fails:
         else:
             st.button("Apstiprināt koordinātas", icon="💾", on_click=apstiprinat_koordinatu, args=(izveleta_ierice, ))
 
-    st.subheader(f"Sensora dati datumā: {st.session_state.tif_datums}")
-    if not len(st.session_state.tif_sensora_dati) == 0:
+
+    if len(st.session_state.tif_sensora_dati) > 0:
+        st.subheader(f"Sensora dati datumā: {st.session_state.tif_datums}")
         zimet_sensora_datus(st.session_state.tif_sensora_dati)
-    else:
-        st.warning(f"Sensora dati nav pieejami datumā: {st.session_state.tif_datums.strftime('%d.%m.%Y')}")
 
     with kartes_konteineris:
         renderet_karti()
