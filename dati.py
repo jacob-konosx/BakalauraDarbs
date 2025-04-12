@@ -1,66 +1,52 @@
-import requests, datetime
+import datetime
 import streamlit as st
 import pandas as pd
 import altair as alt
-
-
-def dabut_str_diapzonu(diapzona):
-    datu_str_diapzona = []
-    for i in range(2):
-        datu_str_diapzona.append(diapzona[i].strftime("%b").upper() + str(diapzona[i].day).zfill(2) + str(diapzona[i].year))
-
-    return datu_str_diapzona
+from pieprasijumi import dabut_sensora_datus
 
 @st.cache_data
 def ieladet_sensora_datus(visi_ieraksti):
+    ierices = {}
     st.session_state.datu_slani = [key for key in visi_ieraksti[0] if key not in ["device id", "s_date"]]
 
     pirma_ieraksta_datetime = datetime.datetime.strptime(visi_ieraksti[0]["s_date"], "%Y-%m-%dT%H:%M:%SZ")
     st.session_state.tif_laiks = datetime.time(hour=pirma_ieraksta_datetime.hour, minute=pirma_ieraksta_datetime.minute)
 
     for datu_ieraksts in visi_ieraksti:
-        if datu_ieraksts["device id"] not in st.session_state.ierices:
-            st.session_state.ierices[datu_ieraksts["device id"]] = {
+        if datu_ieraksts["device id"] not in ierices:
+            ierices[datu_ieraksts["device id"]] = {
                     "koordinatas": None,
                     "dati": []
                 }
 
-        st.session_state.ierices[datu_ieraksts["device id"]]["dati"].append(datu_ieraksts)
+        ierices[datu_ieraksts["device id"]]["dati"].append(datu_ieraksts)
+    return ierices
 
 
 @st.cache_data(show_spinner="Tiek iegūti sensora dati")
-def dabut_sensora_datus(sensora_datu_url):
-    try:
-        res = requests.get(sensora_datu_url)
-        res.raise_for_status()
-
-        return res.json()
-    except:
-        return None
-
-@st.cache_data(show_spinner="Tiek iegūti sensora dati")
-def dabut_visus_sensora_ierakstus(sensora_datumu_diapzona):
+def dabut_visus_sensora_ierakstus(datumu_diapzona):
     visi_ieraksti = []
-    
+
     try:
-        str_diapzona = dabut_str_diapzonu([sensora_datumu_diapzona[0], sensora_datumu_diapzona[1]])
+        str_diapzona = [datumu_diapzona[i].strftime("%b").upper() + str(datumu_diapzona[i].day).zfill(2) + str(datumu_diapzona[i].year) for i in range(2)]
         sensora_dati = dabut_sensora_datus(st.secrets.sensoru_datu_url.format(str_diapzona[0], str_diapzona[1]))
 
-        if sensora_dati:
-            visi_ieraksti += sensora_dati["items"]
+        visi_ieraksti += sensora_dati["items"]
 
-            while sensora_dati["hasMore"]:
-                jaunais_datu_url = [link for link in sensora_dati["links"] if "next" in link["rel"]]
+        while sensora_dati["hasMore"]:
+            jaunais_datu_url = [link for link in sensora_dati["links"] if "next" in link["rel"]]
 
-                sensora_dati = dabut_sensora_datus(jaunais_datu_url[0]["href"])
+            sensora_dati = dabut_sensora_datus(jaunais_datu_url[0]["href"])
 
-                if sensora_dati:
-                    visi_ieraksti += sensora_dati["items"]
+            if sensora_dati:
+                visi_ieraksti += sensora_dati["items"]
+
+        if len(visi_ieraksti) > 0:
             return visi_ieraksti
         else:
-            return None
+            st.warning("Sensora dati nav pieejami datuma diapzonā!", icon="⚠️")
     except:
-        return None
+        st.toast("Neizdevās pieprasīt sensora datus.", icon="🚨")
 
 def zimet_sensora_datus(sensora_dati):
     df = pd.DataFrame(sensora_dati)

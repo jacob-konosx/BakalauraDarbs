@@ -26,7 +26,7 @@ def ieladet_datus(tif):
 
         attels = src.read([1, 2, 3])  # Izlasit tikai RGB vērtības
 
-    # Uztaisīt transformeru no WebODM CRS uz WGS84, kas ir nepieciešama priekš folium
+    # Uztaisīt transformeru no ODM CRS uz WGS84, kas ir nepieciešama priekš folium
     transformer = Transformer.from_crs(crs, "EPSG:4326", always_xy=True)
 
     # Pārvērtiet robežas no projektētās CRS uz WGS84

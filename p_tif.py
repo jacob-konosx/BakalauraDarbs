@@ -89,17 +89,10 @@ def renderet_karti():
 st.title("Apstrādāt TIF failu")
 if st.session_state.tif_datums:
     dienas_diapzona = [st.session_state.tif_datums, st.session_state.tif_datums + datetime.timedelta(days=1)]
-    sensora_dati = dabut_visus_sensora_ierakstus(dienas_diapzona)
+    st.session_state.tif_sensora_dati = dabut_visus_sensora_ierakstus(dienas_diapzona)
 
-    if sensora_dati:
-        if len(sensora_dati) > 0:
-            st.session_state.tif_sensora_dati = sensora_dati
-            ieladet_sensora_datus(st.session_state.tif_sensora_dati)
-        else:
-            st.warning(f"Sensora dati nav pieejami datuma diapzonā: {dienas_diapzona[0].strftime('%d.%m.%Y')} - {dienas_diapzona[1].strftime('%d.%m.%Y')}")
-    else:
-        st.error("Neizdevās pieprasīt sensora datus.")
-
+    if st.session_state.tif_sensora_dati:
+        st.session_state.ierices = ieladet_sensora_datus(st.session_state.tif_sensora_dati)
 
     col1, col2, col3, col4 = st.columns([3, 3, 8, 1])
     with col1:

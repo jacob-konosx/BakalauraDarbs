@@ -1,6 +1,6 @@
-import requests, time, json
+import time
 import streamlit as st
-from io import BytesIO
+from pieprasijumi import lejupladet_tif, dabut_uzdevuma_info, izveidot_uzdevumu, savienot_odm, atcelt_uzdevumu
 
 st.markdown(
     """
@@ -23,123 +23,79 @@ st.markdown(
     <style>
     """, unsafe_allow_html=True)
 
-def savienot_web_odm():
-    try:
-        res = requests.post(
-            f"{st.secrets.webodm_url}/api/token-auth/",
-            data={
-                'username': st.secrets.webodm_username,
-                'password': st.secrets.webodm_password
-            }
-        ).json()
-
-        if "token" in res:
-            st.session_state.galvene = {'Authorization': f"JWT {res['token']}"}
-    except requests.exceptions.RequestException:
-        st.toast("Kļūda ietsatot WebODM talonu.", icon="⚠️")
-
-if "galvene" not in st.session_state:
+if "tif" not in st.session_state:
     st.session_state.tif = None
-    st.session_state.galvene = None
     st.session_state.uploader_key = 0
     st.session_state.toast_paradits = False
-    st.session_state.task_id = None
-    st.session_state.task_progresa = None
+    st.session_state.uzdevuma_id = None
+    st.session_state.uzdevums_aktivs = False
+
+def generet_karti(faili):
+    atteli = [("images", (fails.name, fails.getvalue(), fails.type)) for fails in faili]
+    izveidot_uzdevumu(atteli)
 
 if not st.session_state.galvene:
-    savienot_web_odm()
+    savienot_odm()
 
 if st.session_state.galvene:
     if not st.session_state.toast_paradits:
-        st.toast("WebODM savienots veiksmīgi.", icon="✅")
+        st.toast("ODM savienots veiksmīgi.", icon="✅")
         st.session_state.toast_paradits = True
 else:
-    st.toast("WebODM neizdevās savienot. Lūdzu mēģiniet vēlreiz", icon="🚨")
+    st.toast("ODM neizdevās savienot. Lūdzu mēģiniet vēlreiz", icon="🚨")
 
-    st.warning("Bezpilota gaisa kuģu attēlu sašūšanu nodrošina WebODM API.")
-    st.button("Savienot ar WebODM", icon="🔄", on_click=lambda: st.session_state.update(web_odm_talons=savienot_web_odm))
+    st.warning("Bezpilota gaisa kuģu attēlu sašūšanu nodrošina ODM API.")
+    st.button("Savienot ar ODM", icon="🔄", on_click=savienot_odm)
     st.stop()
 
 st.title("Dronu un sensoru datu ĢIS")
 
-faili = None
-if st.session_state.tif:
-    col1, col2 = st.columns([5, 0.4])
+izveleti_faili = None
+if not st.session_state.uzdevums_aktivs:
+    if st.session_state.tif:
+        col1, col2 = st.columns([5, 0.4])
+
+        with col1:
+            st.subheader("Ortofoto ir gatavs lejuplādei.")
+            st.download_button(
+                label="Lejuplādēt sašūto GeoTIFF ortofoto",
+                data=st.session_state.tif,
+                file_name="ortofoto.tif",
+                mime="image/tiff",
+                icon="📥"
+            )
+        with col2:
+            st.button("❌", on_click=lambda: st.session_state.update({"uzdevuma_id": None, "tif": None}), help="")
+    else:
+        izveleti_faili = st.file_uploader("Izvēlieties failus:", type=["jpg"], accept_multiple_files=True, key=st.session_state.uploader_key)
+
+    if izveleti_faili:
+        st.button("📤 Ģenerēt karti", on_click=generet_karti, args=(izveleti_faili,))
+else:
+    progresa_text = "Notiek kartes izveidošana. Lūdzu uzgaidiet."
+    col1, col2 = st.columns([5, 1.5])
 
     with col1:
-        st.download_button(
-            label="Lejuplādēt sašūto GeoTIFF ortofoto",
-            data=st.session_state.tif,
-            file_name="ortofoto.tif",
-            mime="image/tiff",
-            icon="📥"
-        )
+        progresa_josla = st.progress(0, text=progresa_text)
     with col2:
-        st.button("❌", on_click=lambda: st.session_state.update({"task_id": None, "tif": None}))
-else:
-    faili = st.file_uploader("Izvēlieties failus:", type=["jpg"], accept_multiple_files=True, key=st.session_state.uploader_key)
+        st.button("Atcelt kartes izveidi", on_click=atcelt_uzdevumu, icon="❌")
 
-if faili:
-    if st.button("📤 Ģenerēt karti"):
-        atteli = [("images", (fails.name, fails.getvalue(), fails.type)) for fails in faili]
-        web_odm_iestatijumi = json.dumps([
-            {'name': "sfm-algorithm", 'value': "planar"},
-            {'name': "fast-orthophoto", 'value': True},
-            {'name': "matcher-neighbors", 'value': 4},
-            {'name': "pc-quality", 'value': "high"},
-            {'name': "orthophoto-resolution", 'value': "2.0"}
-        ])
-
-        res = requests.post(f"{st.secrets.webodm_url}/api/projects/{st.secrets.webodm_project_id}/tasks/",
-                headers=st.session_state.galvene,
-                files=atteli,
-                data={
-                    'options': web_odm_iestatijumi
-                }
-            )
-
-        data = res.json()
-
-        if res.status_code == 201:
-            st.toast("Attēli veiksmīgi augšupielādēti WebODM.", icon="📤")
-
-            st.session_state.task_id = data["id"]
-            st.session_state.task_progresa = True
-        else:
-            st.toast(f"Kļūda failu augšuplādē: {res.status_code}", icon="❌")
-
-if st.session_state.task_progresa:
-    progresa_text = "Notiek kartes izveidošana. Lūdzu uzgaidiet."
-
-    progresa_josla = st.progress(0, text=progresa_text)
     while True:
-        res = requests.get(f"{st.secrets.webodm_url}/api/projects/{st.secrets.webodm_project_id}/tasks/{st.session_state.task_id}/",
-            headers=st.session_state.galvene
-        )
-        res.raise_for_status()
+        uzdevuma_dati = dabut_uzdevuma_info()
 
-        task = res.json()
-        if "running_progress" in task:
-            if task['status'] == 40:
+        if uzdevuma_dati:
+            if uzdevuma_dati['status'] == 40:
                 st.toast("Karte tika veiksmīgi sašūta.", icon="✅")
                 break
 
-            progress = task["running_progress"]
+            progress = uzdevuma_dati["running_progress"]
 
             progresa_josla.progress(progress, text=progresa_text)
             time.sleep(5)
         else:
-            st.toast("Neizdevās dabūt WebODM task progresu.", icon="⚠️")
+            st.toast("Neizdevās dabūt ODM uzdevuma progresu.", icon="⚠️")
 
     progresa_josla.empty()
 
-    orthophoto_url = f"{st.secrets.webodm_url}/api/projects/{st.secrets.webodm_project_id}/tasks/{st.session_state.task_id}/download/orthophoto.tif"
-
-    tif_res = requests.get(orthophoto_url, stream=True, headers=st.session_state.galvene)
-    tif_res.raise_for_status()
-
-    st.session_state.tif = BytesIO(tif_res.content)
-
-    st.session_state.task_progresa = False
-    st.session_state.uploader_key += 1
+    lejupladet_tif()
     st.rerun()

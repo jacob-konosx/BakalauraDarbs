@@ -4,6 +4,8 @@ st.set_page_config(layout="wide")
 
 if "ir_satelita_flizes" not in st.session_state:
     st.session_state.ir_satelita_flizes = False
+    st.session_state.odm_projekta_id = 5
+    st.session_state.galvene = None
 
 def pierakstisanas_logs():
     st.header("Šī aplikācija ir privāta.")
