@@ -92,8 +92,6 @@ else:
 
             progresa_josla.progress(progress, text=progresa_text)
             time.sleep(5)
-        else:
-            st.toast("Neizdevās dabūt ODM uzdevuma progresu.", icon="⚠️")
 
     progresa_josla.empty()
 

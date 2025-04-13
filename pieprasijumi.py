@@ -63,7 +63,7 @@ def dabut_uzdevuma_info():
 
         return atb.json()
     except:
-        return None
+        st.toast("Neizdevās dabūt uzdevuma info!", icon="🚨")
 
 @st.cache_data(show_spinner="Tiek iegūti sensora dati")
 def dabut_sensora_datus(sensora_datu_url):

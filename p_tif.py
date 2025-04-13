@@ -87,7 +87,7 @@ def renderet_karti():
         folium_static(m, width=None, height=KARTES_AUGSTUMS)
 
 st.title("Apstrādāt TIF failu")
-if st.session_state.tif_datums:
+if st.session_state.tif_fails:
     dienas_diapzona = [st.session_state.tif_datums, st.session_state.tif_datums + datetime.timedelta(days=1)]
     st.session_state.tif_sensora_dati = dabut_visus_sensora_ierakstus(dienas_diapzona)
 
@@ -115,7 +115,7 @@ if st.session_state.tif_datums:
             st.button("Apstiprināt koordinātas", icon="💾", on_click=apstiprinat_koordinatu, args=(izveleta_ierice, ))
 
 
-    if len(st.session_state.tif_sensora_dati) > 0:
+    if st.session_state.tif_sensora_dati:
         st.subheader(f"Sensora dati datumā: {st.session_state.tif_datums}")
         zimet_sensora_datus(st.session_state.tif_sensora_dati)
 
