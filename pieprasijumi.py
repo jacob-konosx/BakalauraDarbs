@@ -1,6 +1,5 @@
 import requests, json
 import streamlit as st
-from io import BytesIO
 
 odm_iestatijumi = json.dumps([
     {'name': "sfm-algorithm", 'value': "planar"},
@@ -21,9 +20,10 @@ def savienot_odm():
         )
         atb.raise_for_status()
 
-        st.session_state.galvene = {'Authorization': f"JWT {atb.json()['token']}"}
+        st.toast("ODM savienots veiksmīgi.", icon="✅")
+        return json.dumps({"Authorization": f"JWT {atb.json()['token']}"})
     except:
-        st.toast("Kļūda ietsatot ODM talonu.", icon="⚠️")
+        st.toast("Kļūda ietsatot ODM talonu!", icon="🚨")
 
 def atcelt_uzdevumu():
     try:
@@ -35,13 +35,14 @@ def atcelt_uzdevumu():
     except:
         st.toast("Neizdevās atcelt uzdevumu!", icon="🚨")
 
-def izveidot_uzdevumu(atteli):
+def izveidot_uzdevumu(atteli, kartes_nosaukums):
     try:
         atb = requests.post(f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/",
                 headers=st.session_state.galvene,
                 files=atteli,
                 data={
-                    "options": odm_iestatijumi
+                    "options": odm_iestatijumi,
+                    "name": kartes_nosaukums
                 }
             )
         atb.raise_for_status()
@@ -75,14 +76,28 @@ def dabut_sensora_datus(sensora_datu_url):
     except:
         return None
 
-def lejupladet_tif():
-    lejuplades_url = f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{st.session_state.uzdevuma_id}/download/orthophoto.tif"
+@st.cache_data
+def lejupladet_tif(uzdevuma_id):
+    lejuplades_url = f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{uzdevuma_id}/download/orthophoto.tif"
 
     try:
         atb = requests.get(lejuplades_url, stream=True, headers=st.session_state.galvene)
         atb.raise_for_status()
 
-        st.session_state.tif = BytesIO(atb.content)
-        st.session_state.uzdevums_aktivs = False
+        return atb.content
     except:
         st.toast("Neizdevās lejuplādēt uzdevumu!", icon="🚨")
+
+def izveidot_projektu():
+    try:
+        atb = requests.post(f"{st.secrets.odm_url}/projects/",
+                headers=st.session_state.galvene,
+                data={
+                    "name": st.experimental_user.email,
+                }
+            )
+        atb.raise_for_status()
+
+        return atb.json()
+    except:
+        st.toast("Neizdevās izveidot projektu!", icon="🚨")

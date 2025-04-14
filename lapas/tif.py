@@ -106,7 +106,7 @@ if st.session_state.tif_fails:
 
     bez_koordinatas_ierices = [ierices_id for ierices_id, ierices_dati in st.session_state.ierices.items() if not ierices_dati["koordinatas"]]
     if len(bez_koordinatas_ierices) > 0:
-        st.warning(f"Nepieciešams izvēlēties koordinātas {len(bez_koordinatas_ierices)} ierīcēm: {', '.join(bez_koordinatas_ierices)}.")
+        st.info(f"Nepieciešams izvēlēties koordinātas {len(bez_koordinatas_ierices)} ierīcēm: {', '.join(bez_koordinatas_ierices)}.")
         izveleta_ierice = st.selectbox("Izvēlies ierīci, kurai uzstādīt koordinātas:", bez_koordinatas_ierices)
 
         if not st.session_state.spiediena_rezims:
