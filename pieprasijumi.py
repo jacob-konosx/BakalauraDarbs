@@ -1,5 +1,6 @@
 import requests, json
 import streamlit as st
+from requests.exceptions import HTTPError
 
 odm_iestatijumi = json.dumps([
     {'name': "sfm-algorithm", 'value': "planar"},
@@ -9,7 +10,17 @@ odm_iestatijumi = json.dumps([
     {'name': "orthophoto-resolution", 'value': "2.0"}
 ])
 
-def savienot_odm():
+@st.cache_data(show_spinner="Tiek iegūti sensora dati")
+def dabut_sensora_datus(sensora_datu_url):
+    try:
+        atb = requests.get(sensora_datu_url)
+        atb.raise_for_status()
+
+        return atb.json()
+    except Exception as e:
+        st.error(f"Neizdevās dabūt sensora datus: {e}")
+
+def dabut_galveni():
     try:
         atb = requests.post(
             f"{st.secrets.odm_url}/token-auth/",
@@ -20,84 +31,77 @@ def savienot_odm():
         )
         atb.raise_for_status()
 
-        st.toast("ODM savienots veiksmīgi.", icon="✅")
         return json.dumps({"Authorization": f"JWT {atb.json()['token']}"})
-    except:
-        st.toast("Kļūda ietsatot ODM talonu!", icon="🚨")
+    except Exception as e:
+        st.error(f"Kļūda ODM savienojumā: {e}")
 
-def atcelt_uzdevumu():
+def pieprasit_odm(metode, url, dati=None, faili=None, stream=False):
+    galvene = json.loads(st.session_state.sikdatne["galvene"])
+
     try:
-        atb = requests.post(f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{st.session_state.uzdevuma_id}/remove/", headers=st.session_state.galvene)
+        if metode == "GET":
+            atb = requests.get(url, headers=galvene, stream=stream)
+        elif metode == "POST":
+            atb = requests.post(url, headers=galvene, data=dati, files=faili)
+        else:
+            raise ValueError("Neatbalstīta metode")
+
         atb.raise_for_status()
+        return atb
 
-        st.session_state.uzdevuma_id = None
-        st.session_state.uzdevums_aktivs = False
-    except:
-        st.toast("Neizdevās atcelt uzdevumu!", icon="🚨")
+    except HTTPError as e:
+        if e.response.status_code == 403:
+            galvene = dabut_galveni()
+            st.session_state.sikdatne["galvene"] = galvene
 
-def izveidot_uzdevumu(atteli, kartes_nosaukums):
-    try:
-        atb = requests.post(f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/",
-                headers=st.session_state.galvene,
-                files=atteli,
-                data={
-                    "options": odm_iestatijumi,
-                    "name": kartes_nosaukums
-                }
-            )
-        atb.raise_for_status()
+            if metode == "GET":
+                return requests.get(url, headers=galvene, stream=stream)
+            elif metode == "POST":
+                return requests.post(url, headers=galvene, data=dati, files=faili)
+        else:
+            st.error(f"Kļūda pieprasījumā: {e}")
 
-        st.session_state.uzdevuma_id = atb.json()["id"]
+def izdzest_karti_pec_id(kartes_id):
+    pieprasit_odm("POST", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{kartes_id}/remove/")
+
+def izveidot_karti(atteli, kartes_nosaukums):
+    atb = pieprasit_odm("POST", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/",
+            faili=atteli,
+            dati={
+                "options": odm_iestatijumi,
+                "name": kartes_nosaukums
+            }
+        )
+    dati = atb.json()
+
+    if dati:
+        st.session_state.uzdevuma_id = dati["id"]
         st.session_state.uzdevums_aktivs = True
         st.session_state.uploader_key += 1
 
-        st.toast("Attēli veiksmīgi augšupielādēti ODM.", icon="📤")
-    except:
-        st.toast("Kļūda failu augšuplādē!", icon="🚨")
+        return True
 
-def dabut_uzdevuma_info():
-    try:
-        atb = requests.get(f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{st.session_state.uzdevuma_id}",
-                headers=st.session_state.galvene
-            )
-        atb.raise_for_status()
+def dabut_kartes_info():
+    return pieprasit_odm("GET", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{st.session_state.uzdevuma_id}").json()
 
-        return atb.json()
-    except:
-        st.toast("Neizdevās dabūt uzdevuma info!", icon="🚨")
+@st.cache_data(show_spinner="Lejuplādē karti")
+def lejupladet_karti_pec_id(kartes_id):
+    lejuplades_url = f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{kartes_id}/download/orthophoto.tif"
 
-@st.cache_data(show_spinner="Tiek iegūti sensora dati")
-def dabut_sensora_datus(sensora_datu_url):
-    try:
-        atb = requests.get(sensora_datu_url)
-        atb.raise_for_status()
+    atb = pieprasit_odm("GET", lejuplades_url, stream=True)
 
-        return atb.json()
-    except:
-        return None
-
-@st.cache_data
-def lejupladet_tif(uzdevuma_id):
-    lejuplades_url = f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{uzdevuma_id}/download/orthophoto.tif"
-
-    try:
-        atb = requests.get(lejuplades_url, stream=True, headers=st.session_state.galvene)
-        atb.raise_for_status()
-
-        return atb.content
-    except:
-        st.toast("Neizdevās lejuplādēt uzdevumu!", icon="🚨")
+    return atb.content
 
 def izveidot_projektu():
-    try:
-        atb = requests.post(f"{st.secrets.odm_url}/projects/",
-                headers=st.session_state.galvene,
-                data={
-                    "name": st.experimental_user.email,
-                }
-            )
-        atb.raise_for_status()
+    atb = pieprasit_odm("POST", f"{st.secrets.odm_url}/projects/",
+            dati={
+                "name": st.experimental_user.email,
+            }
+        )
 
-        return atb.json()
-    except:
-        st.toast("Neizdevās izveidot projektu!", icon="🚨")
+    return atb.json()
+
+def dabut_lietotaja_kartes():
+    atb = pieprasit_odm("GET", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/",)
+
+    return atb.json()

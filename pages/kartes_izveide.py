@@ -1,6 +1,6 @@
 import time
 import streamlit as st
-from pieprasijumi import lejupladet_tif, dabut_uzdevuma_info, izveidot_uzdevumu, savienot_odm, atcelt_uzdevumu
+from pieprasijumi import izdzest_karti_pec_id, dabut_kartes_info, izveidot_karti
 
 st.markdown(
     """
@@ -31,12 +31,20 @@ if "uzdevuma_id" not in st.session_state:
 
 def generet_karti(faili, kartes_nosaukums):
     atteli = [("images", (fails.name, fails.getvalue(), fails.type)) for fails in faili]
-    izveidot_uzdevumu(atteli, kartes_nosaukums)
+    ir_izveidots = izveidot_karti(atteli, kartes_nosaukums)
+
+    if ir_izveidots:
+        st.toast("Attēli veiksmīgi augšupielādēti ODM.", icon="📤")
 
 def atiestatit_datus():
     st.session_state.uzdevuma_id = None
     st.session_state.uzdevums_aktivs = False
     st.session_state.ir_karte_izveidota = False
+
+def atcelt_uzdevumu():
+    izdzest_karti_pec_id(st.session_state.uzdevuma_id)
+    st.session_state.uzdevuma_id = None
+    st.session_state.uzdevums_aktivs = False
 
 st.title("Kartes GeoTIFF izveide")
 
@@ -47,7 +55,7 @@ if not st.session_state.uzdevums_aktivs:
 
         with col1:
             st.subheader("GeoTIFF karte veiksmīgi izveidota!")
-            st.page_link("lapas/tif.py", label="Atvērt karti", icon="🔎")
+            st.page_link("pages/tif_parvalde.py", label="Atvērt karti", icon="🔎")
         with col2:
             st.button("Veidot jaunu karti", on_click=atiestatit_datus, icon="❌")
     else:
@@ -64,13 +72,13 @@ else:
     with col2:
         st.button("Atcelt kartes izveidi", on_click=atcelt_uzdevumu, icon="❌")
 
-    uzdevuma_dati = dabut_uzdevuma_info()
+    uzdevuma_dati = dabut_kartes_info()
     while not uzdevuma_dati["status"] == 40:
         progress = uzdevuma_dati["running_progress"]
         progresa_josla.progress(progress, text=progresa_text)
 
         time.sleep(5)
-        uzdevuma_dati = dabut_uzdevuma_info()
+        uzdevuma_dati = dabut_kartes_info()
 
     st.toast("Karte tika veiksmīgi izveidota.", icon="✅")
 

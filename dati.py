@@ -10,6 +10,7 @@ def ieladet_sensora_datus(visi_ieraksti):
     st.session_state.datu_slani = [key for key in visi_ieraksti[0] if key not in ["device id", "s_date"]]
 
     pirma_ieraksta_datetime = datetime.datetime.strptime(visi_ieraksti[0]["s_date"], "%Y-%m-%dT%H:%M:%SZ")
+
     st.session_state.tif_laiks = datetime.time(hour=pirma_ieraksta_datetime.hour, minute=pirma_ieraksta_datetime.minute)
 
     for datu_ieraksts in visi_ieraksti:
