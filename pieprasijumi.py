@@ -31,7 +31,7 @@ def dabut_galveni():
         )
         atb.raise_for_status()
 
-        return json.dumps({"Authorization": f"JWT {atb.json()['token']}"})
+        return {"Authorization": f"JWT {atb.json()['token']}"}
     except Exception as e:
         st.error(f"Kļūda ODM savienojumā: {e}")
 
@@ -52,7 +52,7 @@ def pieprasit_odm(metode, url, dati=None, faili=None, stream=False):
     except HTTPError as e:
         if e.response.status_code == 403:
             galvene = dabut_galveni()
-            st.session_state.sikdatne["galvene"] = galvene
+            st.session_state.sikdatne["galvene"] = json.dumps(galvene)
 
             if metode == "GET":
                 return requests.get(url, headers=galvene, stream=stream)

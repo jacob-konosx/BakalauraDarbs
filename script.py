@@ -8,13 +8,45 @@ VIENA_DIENA = 86400
 
 st.set_page_config(layout="wide")
 
-st.markdown("""
+st.markdown(
+    """
     <style>
+        div[data-testid="stFileUploaderDropzoneInstructions"] div span, small {
+            display: none;
+        }
+
+        div[data-testid="stFileUploaderDropzoneInstructions"] div::after {
+            content: "Izvēlēties TIF failu (200MB faila limits)";
+        }
+
+        section[data-testid="stFileUploaderDropzone"]{
+            cursor: pointer;
+        }
+
+        div[data-testid="stFileUploader"]>section[data-testid="stFileUploaderDropzone"]>button[data-testid="stBaseButton-secondary"] {
+            display: none;
+        }
+
+        .map-container {
+            width: 100%;
+        }
+
+        .stText{
+            padding: 0.4rem 0px;
+        }
+
         div.st-key-CookieManager-sync_cookies{
             display: none;
         }
-    </style>
-""", unsafe_allow_html=True)
+
+        div[data-testid="InputInstructions"] *{
+            display: none;
+        }
+
+        div[data-testid="InputInstructions"]:after{
+            content: "Spiest Enter, lai apstiprinātu";
+        }
+    """, unsafe_allow_html=True)
 
 if "ir_satelita_flizes" not in st.session_state:
     st.session_state.ir_satelita_flizes = False
@@ -23,7 +55,7 @@ if "ir_satelita_flizes" not in st.session_state:
 def uzstadit_odm_savienojumu(sikdatne):
     galvene = dabut_galveni()
     if galvene:
-        sikdatne["galvene"] = galvene
+        sikdatne["galvene"] = json.dumps(galvene)
         st.toast("ODM savienots veiksmīgi.", icon="✅")
 
 def izrakstit_lietotaju(sikdatne):

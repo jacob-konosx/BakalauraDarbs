@@ -2,26 +2,6 @@ import time
 import streamlit as st
 from pieprasijumi import izdzest_karti_pec_id, dabut_kartes_info, izveidot_karti
 
-st.markdown(
-    """
-    <style>
-        div[data-testid="stFileUploaderDropzoneInstructions"] div span, small {
-            display: none;
-        }
-
-        div[data-testid="stFileUploaderDropzoneInstructions"] div::after {
-            content: "Izvēlēties drona JPG failus (200MB faila limits)";
-        }
-
-        section[data-testid="stFileUploaderDropzone"]{
-            cursor: pointer;
-        }
-
-        div[data-testid="stFileUploader"]>section[data-testid="stFileUploaderDropzone"]>button[data-testid="stBaseButton-secondary"] {
-            display: none;
-        }
-    <style>
-    """, unsafe_allow_html=True)
 
 if "uzdevuma_id" not in st.session_state:
     st.session_state.uploader_key = 0
@@ -57,12 +37,11 @@ if not st.session_state.uzdevums_aktivs:
             st.subheader("GeoTIFF karte veiksmīgi izveidota!")
             st.page_link("pages/tif_parvalde.py", label="Atvērt karti", icon="🔎")
         with col2:
-            st.button("Veidot jaunu karti", on_click=atiestatit_datus, icon="❌")
+            st.button("Veidot jaunu karti", on_click=atiestatit_datus, icon="➕")
     else:
         kartes_nosaukums = st.text_input("Kartes Nosaukums", placeholder="Ievadiet kartes nosaukumu")
         izveleti_faili = st.file_uploader("Izvēlieties failus:", type=["jpg"], accept_multiple_files=True, key=st.session_state.uploader_key)
-        if izveleti_faili and kartes_nosaukums:
-            st.button("📤 Ģenerēt karti", on_click=generet_karti, args=(izveleti_faili, kartes_nosaukums))
+        st.button("📤 Ģenerēt karti", on_click=generet_karti, args=(izveleti_faili, kartes_nosaukums), disabled=kartes_nosaukums=="" or izveleti_faili==[])
 else:
     progresa_text = "Notiek kartes izveidošana. Lūdzu uzgaidiet."
     col1, col2 = st.columns([5, 1.5])

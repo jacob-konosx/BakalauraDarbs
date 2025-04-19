@@ -90,7 +90,6 @@ def izveidot_karti(ir_satelita_flizes, izveleta_koordinate, ierices, tif_laiks):
 
                 for ieraksts in ierices_dati["dati"]:
                     s_date_datetime = datetime.strptime(ieraksts["s_date"], "%Y-%m-%dT%H:%M:%SZ")
-
                     if s_date_datetime.minute == tif_laiks.minute and s_date_datetime.hour == tif_laiks.hour:
                         datu_ieraksts = ieraksts
                         break
