@@ -1,6 +1,6 @@
 import datetime
 import streamlit as st
-from dati import dabut_visus_sensora_ierakstus, zimet_sensora_datus
+from utils.sensoru_dati import dabut_visus_sensora_ierakstus, zimet_sensora_datus
 
 if "sensora_dati" not in st.session_state:
     st.session_state.sensora_dati = None

@@ -2,7 +2,7 @@ import requests, json
 import streamlit as st
 from requests.exceptions import HTTPError
 
-odm_iestatijumi = json.dumps([
+ODM_IESTATIJUMI = json.dumps([
     {'name': "sfm-algorithm", 'value': "planar"},
     {'name': "fast-orthophoto", 'value': True},
     {'name': "matcher-neighbors", 'value': 4},
@@ -58,31 +58,33 @@ def pieprasit_odm(metode, url, dati=None, faili=None, stream=False):
                 return requests.get(url, headers=galvene, stream=stream)
             elif metode == "POST":
                 return requests.post(url, headers=galvene, data=dati, files=faili)
+        elif e.response.status_code == 404:
+            return None
         else:
             st.error(f"Kļūda pieprasījumā: {e}")
 
 def izdzest_karti_pec_id(kartes_id):
-    pieprasit_odm("POST", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{kartes_id}/remove/")
+    atb = pieprasit_odm("POST", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{kartes_id}/remove/")
+
+    if atb:
+        return atb.json()
 
 def izveidot_karti(atteli, kartes_nosaukums):
     atb = pieprasit_odm("POST", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/",
             faili=atteli,
             dati={
-                "options": odm_iestatijumi,
+                "options": ODM_IESTATIJUMI,
                 "name": kartes_nosaukums
             }
         )
-    dati = atb.json()
+    if atb:
+        return atb.json()
 
-    if dati:
-        st.session_state.uzdevuma_id = dati["id"]
-        st.session_state.uzdevums_aktivs = True
-        st.session_state.uploader_key += 1
+def dabut_kartes_info_pec_id(kartes_id):
+    atb = pieprasit_odm("GET", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{kartes_id}")
 
-        return True
-
-def dabut_kartes_info():
-    return pieprasit_odm("GET", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{st.session_state.uzdevuma_id}").json()
+    if atb:
+        return atb.json()
 
 @st.cache_data(show_spinner="Lejuplādē karti")
 def lejupladet_karti_pec_id(kartes_id):
@@ -90,7 +92,8 @@ def lejupladet_karti_pec_id(kartes_id):
 
     atb = pieprasit_odm("GET", lejuplades_url, stream=True)
 
-    return atb.content
+    if atb:
+        return atb.content
 
 def izveidot_projektu():
     atb = pieprasit_odm("POST", f"{st.secrets.odm_url}/projects/",
@@ -99,9 +102,11 @@ def izveidot_projektu():
             }
         )
 
-    return atb.json()
+    if atb:
+        return atb.json()
 
 def dabut_lietotaja_kartes():
     atb = pieprasit_odm("GET", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/",)
 
-    return atb.json()
+    if atb:
+        return atb.json()

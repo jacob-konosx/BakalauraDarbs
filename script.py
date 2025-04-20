@@ -1,52 +1,14 @@
 import json
 import streamlit as st
 from st_cookies_manager import EncryptedCookieManager
-from lietotajs import iestatit_lietotaju
-from pieprasijumi import dabut_galveni
-
-VIENA_DIENA = 86400
+from utils.pieprasijumi import dabut_galveni
+from utils.stils import dabut_stilu
+from utils.db import dabut_lietotaju_pec_epasta, vai_pilnvarots_epasts, izveidot_lietotaju
 
 st.set_page_config(layout="wide")
 
-st.markdown(
-    """
-    <style>
-        div[data-testid="stFileUploaderDropzoneInstructions"] div span, small {
-            display: none;
-        }
-
-        div[data-testid="stFileUploaderDropzoneInstructions"] div::after {
-            content: "Izvēlēties TIF failu (200MB faila limits)";
-        }
-
-        section[data-testid="stFileUploaderDropzone"]{
-            cursor: pointer;
-        }
-
-        div[data-testid="stFileUploader"]>section[data-testid="stFileUploaderDropzone"]>button[data-testid="stBaseButton-secondary"] {
-            display: none;
-        }
-
-        .map-container {
-            width: 100%;
-        }
-
-        .stText{
-            padding: 0.4rem 0px;
-        }
-
-        div.st-key-CookieManager-sync_cookies{
-            display: none;
-        }
-
-        div[data-testid="InputInstructions"] *{
-            display: none;
-        }
-
-        div[data-testid="InputInstructions"]:after{
-            content: "Spiest Enter, lai apstiprinātu";
-        }
-    """, unsafe_allow_html=True)
+stils = dabut_stilu()
+st.markdown(stils, unsafe_allow_html=True)
 
 if "ir_satelita_flizes" not in st.session_state:
     st.session_state.ir_satelita_flizes = False
@@ -92,8 +54,25 @@ else:
         st.session_state.galvene = json.loads(sikdatne["galvene"])
 
     if "odm_projekta_id" not in sikdatne or not sikdatne["odm_projekta_id"]:
-        projekta_id = iestatit_lietotaju()
-        sikdatne["odm_projekta_id"] = projekta_id
+        projekta_id = None
+
+        db_lietotajs = dabut_lietotaju_pec_epasta()
+        if not db_lietotajs:
+            if vai_pilnvarots_epasts():
+                izveidotais_projekts = izveidot_projektu()
+
+                if izveidotais_projekts:
+                    projekta_id = izveidotais_projekts["id"]
+                    izveidot_lietotaju(projekta_id)
+            else:
+                st.info("Jūsu e-pasta adrese nav pilnvarota sitēmā. Sazinaties ar tīmekļa lietotnes administratoru, lai pilnvarotu Jūsu e-pasta adresi.", icon="ℹ️")
+
+                st.button("Mēģiniet vēlreiz autentificēties", icon="🔐", on_click=st.logout)
+                st.stop()
+        else:
+            projekta_id = db_lietotajs["projekta_id"]
+
+        sikdatne["odm_projekta_id"] = str(projekta_id)
     if "odm_projekta_id" not in st.session_state:
         st.session_state.odm_projekta_id = sikdatne["odm_projekta_id"]
 
@@ -107,7 +86,6 @@ else:
     majas_lapa = st.Page("pages/kartes_izveide.py", title="Kartes izveide", icon="🪡")
     tif_izvele = st.Page("pages/tif_parvalde.py", title="GeoTIFF Kartes", icon="🗺️")
     sensoru_lapa = st.Page("pages/sensoru_dati.py", title="Sensoru Dati", icon="📡")
-
     pg = st.navigation([majas_lapa, tif_izvele, sensoru_lapa])
 
     pg.run()

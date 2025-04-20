@@ -2,7 +2,7 @@ import datetime
 import streamlit as st
 import pandas as pd
 import altair as alt
-from pieprasijumi import dabut_sensora_datus
+from utils.pieprasijumi import dabut_sensora_datus
 
 @st.cache_data
 def ieladet_sensora_datus(visi_ieraksti):

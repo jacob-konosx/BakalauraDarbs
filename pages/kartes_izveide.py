@@ -1,7 +1,6 @@
 import time
 import streamlit as st
-from pieprasijumi import izdzest_karti_pec_id, dabut_kartes_info, izveidot_karti
-
+from utils.pieprasijumi import izdzest_karti_pec_id, dabut_kartes_info_pec_id, izveidot_karti
 
 if "uzdevuma_id" not in st.session_state:
     st.session_state.uploader_key = 0
@@ -11,9 +10,12 @@ if "uzdevuma_id" not in st.session_state:
 
 def generet_karti(faili, kartes_nosaukums):
     atteli = [("images", (fails.name, fails.getvalue(), fails.type)) for fails in faili]
-    ir_izveidots = izveidot_karti(atteli, kartes_nosaukums)
+    dati = izveidot_karti(atteli, kartes_nosaukums)
 
-    if ir_izveidots:
+    if dati:
+        st.session_state.uzdevuma_id = dati["id"]
+        st.session_state.uzdevums_aktivs = True
+        st.session_state.uploader_key += 1
         st.toast("Attēli veiksmīgi augšupielādēti ODM.", icon="📤")
 
 def atiestatit_datus():
@@ -27,8 +29,6 @@ def atcelt_uzdevumu():
     st.session_state.uzdevums_aktivs = False
 
 st.title("Kartes GeoTIFF izveide")
-
-izveleti_faili = None
 if not st.session_state.uzdevums_aktivs:
     if st.session_state.ir_karte_izveidota:
         col1, col2 = st.columns([5, 1.5])
@@ -51,14 +51,18 @@ else:
     with col2:
         st.button("Atcelt kartes izveidi", on_click=atcelt_uzdevumu, icon="❌")
 
-    uzdevuma_dati = dabut_kartes_info()
-    while not uzdevuma_dati["status"] == 40:
-        progress = uzdevuma_dati["running_progress"]
-        progresa_josla.progress(progress, text=progresa_text)
+    uzdevuma_dati = dabut_kartes_info_pec_id(st.session_state.uzdevuma_id)
+    if uzdevuma_dati:
+        while not uzdevuma_dati["status"] == 40:
+            progress = uzdevuma_dati["running_progress"]
+            progresa_josla.progress(progress, text=progresa_text)
 
-        time.sleep(5)
-        uzdevuma_dati = dabut_kartes_info()
-
+            time.sleep(5)
+            uzdevuma_dati = dabut_kartes_info_pec_id(st.session_state.uzdevuma_id)
+    else:
+        atiestatit_datus()
+        st.rerun()
+        
     st.toast("Karte tika veiksmīgi izveidota.", icon="✅")
 
     st.session_state.uzdevums_aktivs = False

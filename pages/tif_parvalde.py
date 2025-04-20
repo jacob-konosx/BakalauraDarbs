@@ -2,9 +2,9 @@ import datetime
 from streamlit_folium import st_folium, folium_static
 import streamlit as st
 from io import BytesIO
-from dati import zimet_sensora_datus, dabut_visus_sensora_ierakstus, ieladet_sensora_datus
-from pieprasijumi import dabut_lietotaja_kartes, lejupladet_karti_pec_id, izdzest_karti_pec_id
-from karte import izveidot_karti
+from utils.sensoru_dati import zimet_sensora_datus, dabut_visus_sensora_ierakstus, ieladet_sensora_datus
+from utils.pieprasijumi import dabut_lietotaja_kartes, lejupladet_karti_pec_id, izdzest_karti_pec_id
+from utils.karte import izveidot_karti
 
 KARTES_AUGSTUMS = 600
 
