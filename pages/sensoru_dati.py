@@ -5,7 +5,7 @@ from utils.sensoru_dati import dabut_visus_sensora_ierakstus, zimet_sensora_datu
 if "sensora_dati" not in st.session_state:
     st.session_state.sensora_dati = None
 
-st.title("Sensora Datu Diagramma")
+st.title("Sensora datu diagramma")
 diapzonas_sakums = datetime.date(2023, 7, 23)
 st.date_input("Ievadiet sensoru datu datuma diapzonu:", format="DD.MM.YYYY", key="datuma_diapzona", value=[diapzonas_sakums, diapzonas_sakums + datetime.timedelta(days=3)])
 

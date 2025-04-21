@@ -52,7 +52,7 @@ def renderet_karti():
             height=KARTES_AUGSTUMS,
             key=st.session_state.kartes_key
         )
-
+        st.write(kartes_dati)
         if not st.session_state.izveleta_koordinate:
             st.toast("Izvēlaties koordinātu kartē!", icon="🗺️")
 
@@ -106,7 +106,7 @@ def izdzest_karti(kartes_id):
         st.session_state.kartes =  None
         st.rerun()
 
-st.title("GeoTIFF Kartes")
+st.title("GeoTIFF kartes")
 if st.session_state.tif_fails:
     if not st.session_state.tif_sensora_dati:
         dienas_diapzona = [st.session_state.tif_datums, st.session_state.tif_datums + datetime.timedelta(days=1)]

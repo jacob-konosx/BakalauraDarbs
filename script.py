@@ -1,7 +1,7 @@
 import json
 import streamlit as st
 from st_cookies_manager import EncryptedCookieManager
-from utils.pieprasijumi import dabut_galveni
+from utils.pieprasijumi import dabut_galveni, izveidot_projektu
 from utils.stils import dabut_stilu
 from utils.db import dabut_lietotaju_pec_epasta, vai_pilnvarots_epasts, izveidot_lietotaju
 
@@ -76,7 +76,7 @@ else:
     if "odm_projekta_id" not in st.session_state:
         st.session_state.odm_projekta_id = sikdatne["odm_projekta_id"]
 
-    st.sidebar.header(f"Sveicināti, {st.experimental_user.name}!")
+    st.sidebar.header(f"Sveicināti, :blue[{st.experimental_user.name}]!")
     st.sidebar.button("❌ Izslēgt satelīta flīzes" if st.session_state.ir_satelita_flizes else "🗺️ Ieslēgt satelīta flīzes",
         on_click=lambda: st.session_state.update(ir_satelita_flizes=not st.session_state.ir_satelita_flizes),
         help="Opcija, kas ieslēdz satelīta attēla flīzes iekš ĢIS kartes"
@@ -84,8 +84,8 @@ else:
     st.sidebar.button("Izrakstīties", icon="↪", on_click=izrakstit_lietotaju, args=(sikdatne,))
 
     majas_lapa = st.Page("pages/kartes_izveide.py", title="Kartes izveide", icon="🪡")
-    tif_izvele = st.Page("pages/tif_parvalde.py", title="GeoTIFF Kartes", icon="🗺️")
-    sensoru_lapa = st.Page("pages/sensoru_dati.py", title="Sensoru Dati", icon="📡")
-    pg = st.navigation([majas_lapa, tif_izvele, sensoru_lapa])
+    tif_izvele = st.Page("pages/tif_parvalde.py", title="GeoTIFF kartes", icon="🗺️")
+    sensoru_lapa = st.Page("pages/sensoru_dati.py", title="Sensoru dati", icon="📡")
+    pg = st.navigation({"Kartes": [majas_lapa, tif_izvele], "Dati": [sensoru_lapa]})
 
     pg.run()
