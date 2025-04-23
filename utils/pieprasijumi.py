@@ -2,13 +2,13 @@ import requests, json
 import streamlit as st
 from requests.exceptions import HTTPError
 
-ODM_IESTATIJUMI = json.dumps([
+ODM_IESTATIJUMI = [
     {'name': "sfm-algorithm", 'value': "planar"},
     {'name': "fast-orthophoto", 'value': True},
     {'name': "matcher-neighbors", 'value': 4},
     {'name': "pc-quality", 'value': "high"},
-    {'name': "orthophoto-resolution", 'value': "2.0"}
-])
+    {'name': "tiles", 'value': True}
+]
 
 @st.cache_data(show_spinner="Tiek iegūti sensora dati")
 def dabut_sensora_datus(sensora_datu_url):
@@ -63,31 +63,31 @@ def pieprasit_odm(metode, url, dati=None, faili=None, stream=False):
         else:
             st.error(f"Kļūda pieprasījumā: {e}")
 
-def izdzest_karti_pec_id(kartes_id):
+def izdzest_uzdevumu_pec_id(kartes_id):
     atb = pieprasit_odm("POST", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{kartes_id}/remove/")
 
     if atb:
         return atb.json()
 
-def izveidot_karti(atteli, kartes_nosaukums):
+def izveidot_karti(atteli, kartes_nosaukums, ortofoto_izskirtspeja):
     atb = pieprasit_odm("POST", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/",
             faili=atteli,
             dati={
-                "options": ODM_IESTATIJUMI,
+                "options": json.dumps([{'name': "orthophoto-resolution", 'value': ortofoto_izskirtspeja}, *ODM_IESTATIJUMI]),
                 "name": kartes_nosaukums
             }
         )
     if atb:
         return atb.json()
 
-def dabut_kartes_info_pec_id(kartes_id):
+def dabut_uzdevuma_info_pec_id(kartes_id):
     atb = pieprasit_odm("GET", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{kartes_id}")
 
     if atb:
         return atb.json()
 
 @st.cache_data(show_spinner="Lejuplādē karti")
-def lejupladet_karti_pec_id(kartes_id):
+def lejupladet_tif_pec_id(kartes_id):
     lejuplades_url = f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{kartes_id}/download/orthophoto.tif"
 
     atb = pieprasit_odm("GET", lejuplades_url, stream=True)
@@ -105,7 +105,7 @@ def izveidot_projektu():
     if atb:
         return atb.json()
 
-def dabut_lietotaja_kartes():
+def dabut_lietotaja_uzdevumus():
     atb = pieprasit_odm("GET", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/",)
 
     if atb:

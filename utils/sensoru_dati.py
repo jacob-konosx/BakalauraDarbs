@@ -6,21 +6,21 @@ from utils.pieprasijumi import dabut_sensora_datus
 
 @st.cache_data
 def ieladet_sensora_datus(visi_ieraksti):
-    ierices = {}
-    st.session_state.datu_slani = [key for key in visi_ieraksti[0] if key not in ["device id", "s_date"]]
+    sensora_ierices = {}
+    datu_slani = [key for key in visi_ieraksti[0] if key not in ["device id", "s_date"]]
 
     pirma_ieraksta_datetime = datetime.datetime.strptime(visi_ieraksti[0]["s_date"], "%Y-%m-%dT%H:%M:%SZ")
-    st.session_state.tif_laiks = datetime.time(hour=pirma_ieraksta_datetime.hour, minute=pirma_ieraksta_datetime.minute)
+    ortofoto_sensora_laiks = datetime.time(hour=pirma_ieraksta_datetime.hour, minute=pirma_ieraksta_datetime.minute)
 
     for datu_ieraksts in visi_ieraksti:
-        if datu_ieraksts["device id"] not in ierices:
-            ierices[datu_ieraksts["device id"]] = {
+        if datu_ieraksts["device id"] not in sensora_ierices:
+            sensora_ierices[datu_ieraksts["device id"]] = {
                     "koordinatas": None,
                     "dati": []
                 }
 
-        ierices[datu_ieraksts["device id"]]["dati"].append(datu_ieraksts)
-    return ierices
+        sensora_ierices[datu_ieraksts["device id"]]["dati"].append(datu_ieraksts)
+    return sensora_ierices, datu_slani, ortofoto_sensora_laiks
 
 
 @st.cache_data(show_spinner="Tiek iegūti sensora dati")
