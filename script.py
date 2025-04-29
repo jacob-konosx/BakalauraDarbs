@@ -10,8 +10,7 @@ st.set_page_config(layout="wide")
 stils = dabut_stilu()
 st.markdown(stils, unsafe_allow_html=True)
 
-if "ir_satelita_flizes" not in st.session_state:
-    st.session_state.ir_satelita_flizes = False
+if "izrakstities" not in st.session_state:
     st.session_state.izrakstities = False
 
 def uzstadit_odm_savienojumu(sikdatne):
@@ -65,6 +64,7 @@ else:
                     projekta_id = izveidotais_projekts["id"]
                     izveidot_lietotaju(projekta_id)
             else:
+                st.header("Konts nav pilnvarots")
                 st.info("Jūsu e-pasta adrese nav pilnvarota sitēmā. Sazinaties ar tīmekļa lietotnes administratoru, lai pilnvarotu Jūsu e-pasta adresi.", icon="ℹ️")
 
                 st.button("Mēģiniet vēlreiz autentificēties", icon="🔐", on_click=st.logout)
@@ -77,15 +77,11 @@ else:
         st.session_state.odm_projekta_id = sikdatne["odm_projekta_id"]
 
     st.sidebar.header(f"Sveicināti, :blue[{st.experimental_user.name}]!")
-    st.sidebar.button("❌ Izslēgt satelīta flīzes" if st.session_state.ir_satelita_flizes else "🗺️ Ieslēgt satelīta flīzes",
-        on_click=lambda: st.session_state.update(ir_satelita_flizes=not st.session_state.ir_satelita_flizes),
-        help="Opcija, kas ieslēdz satelīta attēla flīzes iekš ĢIS kartes"
-    )
     st.sidebar.button("Izrakstīties", icon="↪", on_click=izrakstit_lietotaju, args=(sikdatne,))
 
-    majas_lapa = st.Page("pages/kartes_izveide.py", title="Kartes izveide", icon="🪡")
-    tif_izvele = st.Page("pages/kartes_parvalde.py", title="GeoTIFF kartes", icon="🗺️")
-    sensoru_lapa = st.Page("pages/sensoru_dati.py", title="Sensoru dati", icon="📡")
+    majas_lapa = st.Page("lapas/kartes_izveide.py", title="Kartes izveide", icon="🪡")
+    tif_izvele = st.Page("lapas/kartes_parvalde.py", title="GeoTIFF kartes", icon="🗺️")
+    sensoru_lapa = st.Page("lapas/sensoru_dati.py", title="Sensoru dati", icon="📡")
     pg = st.navigation({"Kartes": [majas_lapa, tif_izvele], "Dati": [sensoru_lapa]})
 
     pg.run()

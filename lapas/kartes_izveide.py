@@ -57,4 +57,4 @@ else:
     st.toast("Karte tika veiksmīgi izveidota.", icon="✅")
 
     st.session_state.uzdevums_aktivs = False
-    st.switch_page("pages/kartes_parvalde.py")
+    st.switch_page("lapas/kartes_parvalde.py")

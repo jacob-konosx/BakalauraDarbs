@@ -37,7 +37,6 @@ if "odm_uzdevumi" not in st.session_state:
 @st.fragment
 def renderet_karti():
     m = izveidot_karti(
-        st.session_state.ir_satelita_flizes,
         st.session_state.izveleta_koordinate,
         st.session_state.sensora_ierices,
         st.session_state.ortofoto_sensora_laiks,
@@ -73,7 +72,7 @@ def izveleties_karti(odm_uzdevums):
 @st.dialog("Izvēlaties GeoTIFF kartes failu")
 def izvēlēties_failu():
     st.warning("Kartes operācijas ar GeoTIFF failu būs ievērojami lēnākas nekā caur sistēmas kartes izveides procesu!", icon="⚠️")
-    st.page_link("pages/kartes_izveide.py", label="Doties uz kartes izveidi", icon="🪡")
+    st.page_link("lapas/kartes_izveide.py", label="Doties uz kartes izveidi", icon="🪡")
 
     izveletais_datums = st.date_input("Izvēlaties bildes uzņemšanas datumu:", format="DD.MM.YYYY", value=None)
     tif_fails = st.file_uploader("Izvēlieties GeoTIFF failu:", type=["tif"], accept_multiple_files=False)

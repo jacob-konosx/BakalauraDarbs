@@ -81,7 +81,7 @@ def ieladet_tif_datus(tif):
     return centra_lat, centra_lon, data_url, folium_robeza
 
 @st.cache_data(show_spinner="Tiek ģenerēta karte")
-def izveidot_karti(ir_satelita_flizes, izveleta_koordinate, sensora_ierices, ortofoto_sensora_laiks, odm_uzdevums=None, tif_fails=None):
+def izveidot_karti(izveleta_koordinate, sensora_ierices, ortofoto_sensora_laiks, odm_uzdevums=None, tif_fails=None):
     if odm_uzdevums:
         centra_lat, centra_lon = izrekinat_ortofoto_centru(odm_uzdevums["extent"])
     else:
@@ -139,6 +139,13 @@ def izveidot_karti(ir_satelita_flizes, izveleta_koordinate, sensora_ierices, ort
 
     satelita_flizes.add_to(m)
     stamen_flizes.add_to(m)
+    folium.plugins.GroupedLayerControl(
+        groups={
+            'Kartes flīzes': [stamen_flizes, satelita_flizes],
+        },
+        exclusive_groups=True,
+        collapsed=False,
+    ).add_to(m)
 
     slani = {}
     if len(sensora_ierices) > 0:
@@ -182,6 +189,14 @@ def izveidot_karti(ir_satelita_flizes, izveleta_koordinate, sensora_ierices, ort
                     fill=True,
                     zindex=2
                 ).add_to(m)
+                
+        folium.plugins.GroupedLayerControl(
+            groups={
+                'Info slāņi': list(slani.values())
+            },
+            exclusive_groups=False,
+            collapsed=False,
+        ).add_to(m)
 
     if izveleta_koordinate:
         folium.Circle(
@@ -190,21 +205,5 @@ def izveidot_karti(ir_satelita_flizes, izveleta_koordinate, sensora_ierices, ort
             fill_opacity = 1,
             color="#bd0026ff"
         ).add_to(m)
-
-    folium.plugins.GroupedLayerControl(
-        groups={
-            'Kartes flīzes': [stamen_flizes, satelita_flizes],
-        },
-        exclusive_groups=True,
-        collapsed=False,
-    ).add_to(m)
-
-    folium.plugins.GroupedLayerControl(
-        groups={
-            'Info slāņi': list(slani.values())
-        },
-        exclusive_groups=False,
-        collapsed=False,
-    ).add_to(m)
 
     return m
