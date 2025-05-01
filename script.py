@@ -80,7 +80,7 @@ else:
     st.sidebar.button("Izrakstīties", icon="↪", on_click=izrakstit_lietotaju, args=(sikdatne,))
 
     majas_lapa = st.Page("lapas/kartes_izveide.py", title="Kartes izveide", icon="🪡")
-    tif_izvele = st.Page("lapas/kartes_parvalde.py", title="GeoTIFF kartes", icon="🗺️")
+    tif_izvele = st.Page("lapas/kartes_parvalde.py", title="Ortofoto kartes", icon="🗺️")
     sensoru_lapa = st.Page("lapas/sensoru_dati.py", title="Sensoru dati", icon="📡")
     pg = st.navigation({"Kartes": [majas_lapa, tif_izvele], "Dati": [sensoru_lapa]})
 

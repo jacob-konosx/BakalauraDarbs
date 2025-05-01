@@ -62,7 +62,7 @@ def renderet_karti():
 
 @st.dialog("Izvēlaties sensora datu datumu")
 def izveleties_karti(odm_uzdevums):
-    izveletais_datums = st.date_input("Izvēlaties GeoTIFF datumu:", format="DD.MM.YYYY", value=None)
+    izveletais_datums = st.date_input("Izvēlaties ortofoto datumu:", format="DD.MM.YYYY", value=None)
 
     if st.button("Apsiprināt datus", disabled=izveletais_datums==None, icon="✔️"):
         st.session_state.ortofoto_sensora_datums = izveletais_datums
@@ -74,7 +74,7 @@ def izvēlēties_failu():
     st.warning("Kartes operācijas ar GeoTIFF failu būs ievērojami lēnākas nekā caur sistēmas kartes izveides procesu!", icon="⚠️")
     st.page_link("lapas/kartes_izveide.py", label="Doties uz kartes izveidi", icon="🪡")
 
-    izveletais_datums = st.date_input("Izvēlaties bildes uzņemšanas datumu:", format="DD.MM.YYYY", value=None)
+    izveletais_datums = st.date_input("Izvēlaties ortofoto datumu:", format="DD.MM.YYYY", value=None)
     tif_fails = st.file_uploader("Izvēlieties GeoTIFF failu:", type=["tif"], accept_multiple_files=False)
 
     if st.button("Apsiprināt datus", disabled=izveletais_datums==None or tif_fails==None, icon="✔️"):
@@ -103,7 +103,7 @@ def izdzest_karti(uzdevuma_id):
         st.session_state.odm_uzdevumi=  None
         st.rerun()
 
-st.title("GeoTIFF kartes")
+st.title("Ortofoto kartes")
 if st.session_state.tif_fails or st.session_state.odm_uzdevums:
     if not st.session_state.ortofoto_sensora_dati:
         dienas_diapzona = [st.session_state.ortofoto_sensora_datums, st.session_state.ortofoto_sensora_datums + datetime.timedelta(days=1)]

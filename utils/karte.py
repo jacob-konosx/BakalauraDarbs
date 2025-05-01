@@ -90,13 +90,43 @@ def izveidot_karti(izveleta_koordinate, sensora_ierices, ortofoto_sensora_laiks,
     # Izveidot Folium karti contrtu uz TIF centru
     m = folium.Map(location=[centra_lat, centra_lon], tiles=None, zoom_start=ZOOM_START, max_zoom=MAX_ZOOM, min_zoom=MIN_ZOOM)
 
-    if odm_uzdevums:
-        ortofoto_flizes_url = f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{odm_uzdevums['id']}/orthophoto/tiles/{{z}}/{{x}}/{{y}}.png?jwt={st.session_state.galvene['Authorization'].replace('JWT ', '')}"
+    satelita_flizes = folium.TileLayer(
+            tiles="https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}@2x?access_token=" + st.secrets.mapbox_access_token,
+            attr="Mapbox",
+            name="Satelīta flīzes",
+            overlay=False,
+            zoom_start=ZOOM_START,
+            max_zoom=MAX_ZOOM,
+            min_zoom=MIN_ZOOM
+        ).add_to(m)
+    stamen_flizes = folium.TileLayer(
+        tiles=STAMEN_FLIZES_URL,
+        attr="Stamen",
+        name="Stamen flīzes",
+        overlay=False,
+        zoom_start=ZOOM_START,
+        max_zoom=MAX_ZOOM,
+        min_zoom=MIN_ZOOM
+        ).add_to(m)
 
-        folium.TileLayer(
+    if odm_uzdevums:
+        ortofoto_flizes_url = f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{odm_uzdevums['id']}/orthophoto/tiles/{{z}}/{{x}}/{{y}}?jwt={st.session_state.galvene['Authorization'].replace('JWT ', '')}"
+
+        ortofoto = folium.TileLayer(
             tiles=ortofoto_flizes_url,
             attr='WebODM',
-            name='Ortofoto flīzes',
+            name='Ortofoto karte',
+            overlay=True,
+            z_index=10,
+            zoom_start=ZOOM_START,
+            max_zoom=MAX_ZOOM,
+            min_zoom=MIN_ZOOM
+        ).add_to(m)
+
+        ndvi = folium.TileLayer(
+            tiles=ortofoto_flizes_url+"&formula=VARI&bands=auto&color_map=rdylgn&rescale=-0.19014084507042253,0.19827586206896552",
+            attr='WebODM',
+            name='NDVI indeks',
             overlay=True,
             z_index=10,
             zoom_start=ZOOM_START,
@@ -117,35 +147,6 @@ def izveidot_karti(izveleta_koordinate, sensora_ierices, ortofoto_sensora_laiks,
             max_zoom=MAX_ZOOM,
             min_zoom=MIN_ZOOM
         ).add_to(m)
-
-    satelita_flizes = folium.TileLayer(
-        tiles="https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}@2x?access_token=" + st.secrets.mapbox_access_token,
-        attr="Mapbox",
-        name="Satelīta flīzes",
-        overlay=False,
-        zoom_start=ZOOM_START,
-        max_zoom=MAX_ZOOM,
-        min_zoom=MIN_ZOOM
-    )
-    stamen_flizes = folium.TileLayer(
-        tiles=STAMEN_FLIZES_URL,
-        attr="Stamen",
-        name="Stamen flīzes",
-        overlay=False,
-        zoom_start=ZOOM_START,
-        max_zoom=MAX_ZOOM,
-        min_zoom=MIN_ZOOM
-        )
-
-    satelita_flizes.add_to(m)
-    stamen_flizes.add_to(m)
-    folium.plugins.GroupedLayerControl(
-        groups={
-            'Kartes flīzes': [stamen_flizes, satelita_flizes],
-        },
-        exclusive_groups=True,
-        collapsed=False,
-    ).add_to(m)
 
     slani = {}
     if len(sensora_ierices) > 0:
@@ -189,7 +190,7 @@ def izveidot_karti(izveleta_koordinate, sensora_ierices, ortofoto_sensora_laiks,
                     fill=True,
                     zindex=2
                 ).add_to(m)
-                
+
         folium.plugins.GroupedLayerControl(
             groups={
                 'Info slāņi': list(slani.values())
@@ -205,5 +206,21 @@ def izveidot_karti(izveleta_koordinate, sensora_ierices, ortofoto_sensora_laiks,
             fill_opacity = 1,
             color="#bd0026ff"
         ).add_to(m)
+
+    folium.plugins.GroupedLayerControl(
+            groups={
+                'Ortofoto slāņi': [ortofoto, ndvi]
+            },
+            exclusive_groups=True,
+            collapsed=False,
+        ).add_to(m)
+
+    folium.plugins.GroupedLayerControl(
+        groups={
+            'Kartes flīzes': [stamen_flizes, satelita_flizes],
+        },
+        exclusive_groups=True,
+        collapsed=False,
+    ).add_to(m)
 
     return m
