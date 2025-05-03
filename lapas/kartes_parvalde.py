@@ -14,7 +14,6 @@ def uzstadit_state():
     st.session_state.izveleta_koordinate = None
     st.session_state.ortofoto_sensora_dati = None
     st.session_state.sensora_ierices = {}
-    st.session_state.datu_slani = []
     st.session_state.odm_uzdevumi = None
     st.session_state.odm_uzdevums = None
     st.session_state.tif_fails = None
@@ -110,10 +109,9 @@ if st.session_state.tif_fails or st.session_state.odm_uzdevums:
         st.session_state.ortofoto_sensora_dati = dabut_visus_sensora_ierakstus(dienas_diapzona)
 
         if st.session_state.ortofoto_sensora_dati:
-            sensora_ierices, datu_slani, ortofoto_sensora_laiks = ieladet_sensora_datus(st.session_state.ortofoto_sensora_dati)
+            sensora_ierices, ortofoto_sensora_laiks = ieladet_sensora_datus(st.session_state.ortofoto_sensora_dati)
 
             st.session_state.sensora_ierices = sensora_ierices
-            st.session_state.datu_slani = datu_slani
             st.session_state.ortofoto_sensora_laiks= ortofoto_sensora_laiks
 
     kartes_cilne, sensora_datu_cilne = st.tabs(["Karte", "Sensora dati"])

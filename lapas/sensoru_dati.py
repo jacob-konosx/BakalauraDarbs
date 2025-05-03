@@ -7,7 +7,7 @@ if "sensora_dati" not in st.session_state:
 
 st.title("Sensora datu diagramma")
 diapzonas_sakums = datetime.date(2023, 7, 23)
-st.date_input("Ievadiet sensoru datu datuma diapzonu:", format="DD.MM.YYYY", key="datuma_diapzona", value=[diapzonas_sakums, diapzonas_sakums + datetime.timedelta(days=3)])
+st.date_input("Ievadiet sensoru datu datuma diapzonu:", format="DD.MM.YYYY", key="datuma_diapzona", value=[diapzonas_sakums, diapzonas_sakums + datetime.timedelta(days=2)])
 
 if len(st.session_state.datuma_diapzona) == 2:
     st.session_state.sensora_dati = dabut_visus_sensora_ierakstus(st.session_state.datuma_diapzona)

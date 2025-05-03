@@ -4,10 +4,18 @@ import pandas as pd
 import altair as alt
 from utils.pieprasijumi import dabut_sensora_datus
 
+opcijas = {
+    "air temperature": "Gaisa Temperatūra (°C)",
+    "air humidity": "Gaisa Mitrums (%)",
+    "soil temperature 1": "Augsnes Temperatūra 1 (°C)",
+    "soil temperature 2": "Augsnes Temperatūra 2 (°C)",
+    "soil moisture 1": "Augsnes Mitrums 1 (%)",
+    "soil moisture 2": "Augsnes Mitrums 2 (%)",
+}
+
 @st.cache_data
 def ieladet_sensora_datus(visi_ieraksti):
     sensora_ierices = {}
-    datu_slani = [key for key in visi_ieraksti[0] if key not in ["device id", "s_date"]]
 
     pirma_ieraksta_datetime = datetime.datetime.strptime(visi_ieraksti[0]["s_date"], "%Y-%m-%dT%H:%M:%SZ")
     ortofoto_sensora_laiks = datetime.time(hour=pirma_ieraksta_datetime.hour, minute=pirma_ieraksta_datetime.minute)
@@ -20,8 +28,7 @@ def ieladet_sensora_datus(visi_ieraksti):
                 }
 
         sensora_ierices[datu_ieraksts["device id"]]["dati"].append(datu_ieraksts)
-    return sensora_ierices, datu_slani, ortofoto_sensora_laiks
-
+    return sensora_ierices, ortofoto_sensora_laiks
 
 @st.cache_data(show_spinner="Tiek iegūti sensora dati")
 def dabut_visus_sensora_ierakstus(datumu_diapzona):
@@ -56,18 +63,9 @@ def zimet_sensora_datus(sensora_dati):
     numeric_cols = ["air temperature", "air humidity", "soil temperature 1", "soil temperature 2", "soil moisture 1", "soil moisture 2"]
     df[numeric_cols] = df[numeric_cols].astype(float)
 
-    opcijas = {
-        "Gaisa Temperatūra (°C)": "air temperature",
-        "Gaisa Mitrums (%)": "air humidity",
-        "Augsnes Temperatūra 1 (°C)": "soil temperature 1",
-        "Augsnes Temperatūra 2 (°C)": "soil temperature 2",
-        "Augsnes Mitrums 1 (%)": "soil moisture 1",
-        "Augsnes Mitrums 2 (%)": "soil moisture 2",
-    }
+    izveleta_opcija = st.selectbox("Datu kategorijas: ", list(opcijas.values()))
 
-    izveleta_opcija = st.selectbox("Datu kategorijas: ", list(opcijas.keys()))
-
-    opcija = opcijas[izveleta_opcija]
+    opcija = list(opcijas.keys())[list(opcijas.values()).index(izveleta_opcija)]
 
     chart = (
         alt.Chart(df)
@@ -81,5 +79,4 @@ def zimet_sensora_datus(sensora_dati):
         .interactive()
     )
 
-    st.write("")
     st.altair_chart(chart)
