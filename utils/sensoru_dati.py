@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 from utils.pieprasijumi import dabut_sensora_datus
+from utils.db import dabut_sensoru_koordinatas_pec_uzdevuma_id, izveidot_sensoru_koordinatas
 
 opcijas = {
     "air temperature": "Gaisa Temperatūra (°C)",
@@ -14,7 +15,7 @@ opcijas = {
 }
 
 @st.cache_data
-def ieladet_sensora_datus(visi_ieraksti):
+def izveidot_sensora_ierices(visi_ieraksti):
     sensora_ierices = {}
 
     pirma_ieraksta_datetime = datetime.datetime.strptime(visi_ieraksti[0]["s_date"], "%Y-%m-%dT%H:%M:%SZ")
@@ -23,12 +24,25 @@ def ieladet_sensora_datus(visi_ieraksti):
     for datu_ieraksts in visi_ieraksti:
         if datu_ieraksts["device id"] not in sensora_ierices:
             sensora_ierices[datu_ieraksts["device id"]] = {
-                    "koordinatas": None,
-                    "dati": []
-                }
-
+                "koordinatas": [None, None],
+                "dati": []
+            }
         sensora_ierices[datu_ieraksts["device id"]]["dati"].append(datu_ieraksts)
+
     return sensora_ierices, ortofoto_sensora_laiks
+
+def ieladet_sensora_datus():
+    st.session_state.sensora_ierices, st.session_state.ortofoto_sensora_laiks = izveidot_sensora_ierices(st.session_state.ortofoto_sensora_dati)
+
+    if st.session_state.odm_uzdevums:
+        db_sensoru_koordinatas = dabut_sensoru_koordinatas_pec_uzdevuma_id(st.session_state.odm_uzdevums["id"])
+
+        if db_sensoru_koordinatas:
+            for koordinata in db_sensoru_koordinatas:
+                st.session_state.sensora_ierices[koordinata["sensora_id"]]["koordinatas"] = [koordinata["platums"], koordinata["garums"]]
+        else:
+            for sensora_id in st.session_state.sensora_ierices:
+                izveidot_sensoru_koordinatas(st.session_state.odm_uzdevums["id"], sensora_id, [None, None])
 
 @st.cache_data(show_spinner="Tiek iegūti sensora dati")
 def dabut_visus_sensora_ierakstus(datumu_diapzona):
@@ -48,7 +62,7 @@ def dabut_visus_sensora_ierakstus(datumu_diapzona):
             if sensora_dati:
                 visi_ieraksti += sensora_dati["items"]
 
-        if len(visi_ieraksti) > 0:
+        if visi_ieraksti:
             return visi_ieraksti
         else:
             st.warning("Sensora dati nav pieejami datuma diapzonā!", icon="⚠️")

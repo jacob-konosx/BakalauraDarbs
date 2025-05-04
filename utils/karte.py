@@ -106,6 +106,7 @@ def izveidot_karti(izveleta_koordinate, visas_sensora_ierices, ortofoto_sensora_
         z_index=1,
     ).add_to(m)
 
+    ortofoto = None
     if odm_uzdevums:
         ortofoto_flizes_url = f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{odm_uzdevums['id']}/orthophoto/tiles/{{z}}/{{x}}/{{y}}?jwt={st.session_state.galvene['Authorization'].replace('JWT ', '')}"
 
@@ -146,11 +147,11 @@ def izveidot_karti(izveleta_koordinate, visas_sensora_ierices, ortofoto_sensora_
         ).add_to(m)
 
     slani = {}
-    if len(visas_sensora_ierices) > 0:
-        sensora_ierices_ar_koord =  {a: v for a, v in visas_sensora_ierices.items() if v.get("koordinatas") is not None}
+    if visas_sensora_ierices:
+        sensora_ierices_ar_koord =  {a: v for a, v in visas_sensora_ierices.items() if v.get("koordinatas")[0] is not None}
 
-        visu_datu_ieraksts = None
         for sensora_ierices_id, sensora_ierices_dati in sensora_ierices_ar_koord.items():
+            visu_datu_ieraksts = None
             for ieraksts in sensora_ierices_dati["dati"]:
                 s_date_datetime = datetime.strptime(ieraksts["s_date"], "%Y-%m-%dT%H:%M:%SZ")
                 if s_date_datetime.minute == ortofoto_sensora_laiks.minute and s_date_datetime.hour == ortofoto_sensora_laiks.hour:
@@ -207,12 +208,13 @@ def izveidot_karti(izveleta_koordinate, visas_sensora_ierices, ortofoto_sensora_
             color="#bd0026ff"
         ).add_to(m)
 
-    folium.plugins.GroupedLayerControl(
-            groups={
-                'Ortofoto slāņi': [ortofoto, ndvi]
-            },
-            exclusive_groups=True,
-            collapsed=False,
-        ).add_to(m)
+    if ortofoto:
+        folium.plugins.GroupedLayerControl(
+                groups={
+                    'Ortofoto slāņi': [ortofoto, ndvi]
+                },
+                exclusive_groups=True,
+                collapsed=False,
+            ).add_to(m)
 
     return m

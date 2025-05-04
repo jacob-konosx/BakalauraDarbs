@@ -2,7 +2,8 @@ import datetime
 from streamlit_folium import st_folium, folium_static
 import streamlit as st
 from utils.sensoru_dati import zimet_sensora_datus, dabut_visus_sensora_ierakstus, ieladet_sensora_datus
-from utils.pieprasijumi import dabut_lietotaja_uzdevumus, lejupladet_tif_pec_id, izdzest_uzdevumu_pec_id, dabut_uzdevuma_info_pec_id
+from utils.pieprasijumi import dabut_lietotaja_uzdevumus, lejupladet_tif_pec_id, izdzest_uzdevumu_pec_id
+from utils.db import dabut_odm_uzdevumu_pec_id, atjauninat_odm_uzdevuma_datumu_pec_id, atjauninat_sensora_koordinatas_pec_id, dzest_sensora_koordinatas_pec_uzdevuma_id
 from utils.karte import izveidot_karti
 
 KARTES_AUGSTUMS = 600
@@ -19,6 +20,9 @@ def uzstadit_state():
     st.session_state.tif_fails = None
 
 def apstiprinat_koordinatu(izveleta_ierice):
+    if st.session_state.odm_uzdevums:
+        atjauninat_sensora_koordinatas_pec_id(st.session_state.odm_uzdevums["id"], izveleta_ierice, st.session_state.izveleta_koordinate)
+
     st.session_state.spiediena_rezims = False
     st.session_state.sensora_ierices[izveleta_ierice]["koordinatas"] = st.session_state.izveleta_koordinate
     st.session_state.izveleta_koordinate = None
@@ -29,6 +33,10 @@ def tif_datuma_izmaina():
     st.session_state.izveleta_koordinate = None
     st.session_state.sensora_ierices = {}
     st.session_state.ortofoto_sensora_dati = None
+
+    if st.session_state.odm_uzdevums:
+        atjauninat_odm_uzdevuma_datumu_pec_id(st.session_state.odm_uzdevums["id"], st.session_state.ortofoto_sensora_datums)
+        dzest_sensora_koordinatas_pec_uzdevuma_id(st.session_state.odm_uzdevums["id"])
 
 if "odm_uzdevumi" not in st.session_state:
     uzstadit_state()
@@ -59,14 +67,12 @@ def renderet_karti():
     else:
         folium_static(m, width=None, height=KARTES_AUGSTUMS)
 
-@st.dialog("Izvēlaties sensora datu datumu")
 def izveleties_karti(odm_uzdevums):
-    izveletais_datums = st.date_input("Izvēlaties ortofoto datumu:", format="DD.MM.YYYY", value=None)
+    db_odm_uzdevums = dabut_odm_uzdevumu_pec_id(odm_uzdevums["id"])
 
-    if st.button("Apsiprināt datus", disabled=izveletais_datums==None, icon="✔️"):
-        st.session_state.ortofoto_sensora_datums = izveletais_datums
+    if db_odm_uzdevums:
+        st.session_state.ortofoto_sensora_datums = db_odm_uzdevums["datums"]
         st.session_state.odm_uzdevums = odm_uzdevums
-        st.rerun()
 
 @st.dialog("Izvēlaties GeoTIFF kartes failu")
 def izvēlēties_failu():
@@ -109,10 +115,7 @@ if st.session_state.tif_fails or st.session_state.odm_uzdevums:
         st.session_state.ortofoto_sensora_dati = dabut_visus_sensora_ierakstus(dienas_diapzona)
 
         if st.session_state.ortofoto_sensora_dati:
-            sensora_ierices, ortofoto_sensora_laiks = ieladet_sensora_datus(st.session_state.ortofoto_sensora_dati)
-
-            st.session_state.sensora_ierices = sensora_ierices
-            st.session_state.ortofoto_sensora_laiks= ortofoto_sensora_laiks
+            ieladet_sensora_datus()
 
     kartes_cilne, sensora_datu_cilne = st.tabs(["Karte", "Sensora dati"])
 
@@ -137,16 +140,27 @@ if st.session_state.tif_fails or st.session_state.odm_uzdevums:
 
         kartes_konteineris = st.container()
 
-        bez_koordinatas_ierices = [ierices_id for ierices_id, ierices_dati in st.session_state.sensora_ierices.items() if not ierices_dati["koordinatas"]]
-        if len(bez_koordinatas_ierices) > 0:
-            st.info(f"Nepieciešams izvēlēties koordinātas {len(bez_koordinatas_ierices)} ierīcēm: {', '.join(bez_koordinatas_ierices)}.")
-            izveleta_ierice = st.selectbox("Izvēlies ierīci, kurai uzstādīt koordinātas:", bez_koordinatas_ierices)
+        bez_koordinatas_ierices = [ierices_id for ierices_id, ierices_dati in st.session_state.sensora_ierices.items() if not ierices_dati["koordinatas"][0]]
+        ar_koordinatas_ierices = [ierices_id for ierices_id, ierices_dati in st.session_state.sensora_ierices.items() if ierices_dati["koordinatas"][0]]
 
-            if not st.session_state.spiediena_rezims:
-                st.button("Izvēlēties koordinātas", icon="🗺️", on_click=lambda: st.session_state.update(spiediena_rezims=True))
+        koord_izveles_cilne, koord_redigesanas_cilne = st.tabs(["Koordinātas izvēle", "Koordinātas rediģēšana"])
+        with koord_izveles_cilne:
+            if bez_koordinatas_ierices:
+                #st.info(f"Nepieciešams izvēlēties koordinātas {len(bez_koordinatas_ierices)} ierīcēm: {', '.join(bez_koordinatas_ierices)}.")
+                izveleta_ierice = st.selectbox("Izvēlies ierīci, kurai uzstādīt koordinātas:", bez_koordinatas_ierices)
+
+                if not st.session_state.spiediena_rezims:
+                    st.button("Izvēlēties koordinātas", icon="🗺️", on_click=lambda: st.session_state.update(spiediena_rezims=True))
+                else:
+                    st.button("Apstiprināt koordinātas", icon="💾", on_click=apstiprinat_koordinatu, args=(izveleta_ierice, ))
             else:
-                st.button("Apstiprināt koordinātas", icon="💾", on_click=apstiprinat_koordinatu, args=(izveleta_ierice, ))
-
+                st.info("Visas sensoru ierīces koordinātas ir iestatītas. Lai rediģētu vai dzēstu koordinātas, dodaties uz 'Koordinātas rediģēšana' cilni.")
+        with koord_redigesanas_cilne:
+            if ar_koordinatas_ierices:
+                darbiba = st.selectbox("Izvēlies rediģēšanas darbību:", ["Mainīt koordinātas", "Dzēst koordinatas"])
+                darbibas_ierice = st.selectbox("Izvēlaties sensora ierīci:", ar_koordinatas_ierices)
+            else:
+                st.info("Nevienai sensora ierīcei nav uzstādītas koordinātas. Lai uzstādītu koordinātas, dotaties uz 'Koordinātas izvēle' cilni.")
         with kartes_konteineris:
             renderet_karti()
 
@@ -166,7 +180,7 @@ else:
     if not st.session_state.odm_uzdevumi:
         st.session_state.odm_uzdevumi= dabut_lietotaja_uzdevumus()
 
-    if len(st.session_state.odm_uzdevumi) > 0:
+    if st.session_state.odm_uzdevumi:
         for i, uzdevums in enumerate(st.session_state.odm_uzdevumi):
             with st.container(border=True):
                 dt = datetime.datetime.strptime(uzdevums["created_at"], '%Y-%m-%dT%H:%M:%S.%fZ')
