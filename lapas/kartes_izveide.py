@@ -1,7 +1,7 @@
 import time
 import streamlit as st
 from utils.pieprasijumi import izdzest_uzdevumu_pec_id, dabut_uzdevuma_info_pec_id, izveidot_karti
-from utils.db import izveidot_odm_uzdevumu
+from utils.db import izveidot_odm_uzdevumu, dzest_odm_uzdevumu_pec_id
 
 if "uzdevuma_id" not in st.session_state:
     st.session_state.uploader_key = 0
@@ -22,9 +22,11 @@ def generet_karti(faili, kartes_nosaukums, ortofoto_izskirtspeja, izveletais_dat
         st.session_state.uzdevuma_id = dati["id"]
         st.session_state.uzdevums_aktivs = True
         st.session_state.uploader_key += 1
-        st.toast("Attēli veiksmīgi augšupielādēti ODM.", icon="📤")
+
+        izveidot_odm_uzdevumu(st.session_state.uzdevuma_id, st.session_state.izveides_datums)
 
 def atcelt_uzdevumu():
+    dzest_odm_uzdevumu_pec_id(st.session_state.uzdevuma_id)
     izdzest_uzdevumu_pec_id(st.session_state.uzdevuma_id)
     st.session_state.uzdevuma_id = None
     st.session_state.uzdevums_aktivs = False
@@ -55,7 +57,6 @@ else:
             time.sleep(5)
             uzdevuma_dati = dabut_uzdevuma_info_pec_id(st.session_state.uzdevuma_id)
         else:
-            izveidot_odm_uzdevumu(st.session_state.uzdevuma_id, st.session_state.izveides_datums)
 
             st.toast("Karte tika veiksmīgi izveidota.", icon="✅")
             atiestatit_datus()

@@ -3,7 +3,7 @@ from streamlit_folium import st_folium, folium_static
 import streamlit as st
 from utils.sensoru_dati import zimet_sensora_datus, dabut_visus_sensora_ierakstus, ieladet_sensora_datus
 from utils.pieprasijumi import dabut_lietotaja_uzdevumus, lejupladet_tif_pec_id, izdzest_uzdevumu_pec_id
-from utils.db import dabut_odm_uzdevumu_pec_id, atjauninat_odm_uzdevuma_datumu_pec_id, atjauninat_sensora_koordinatas_pec_id, dzest_sensora_koordinatas_pec_uzdevuma_id
+from utils.db import dabut_odm_uzdevumu_pec_id, atjauninat_odm_uzdevuma_datumu_pec_id, atjauninat_sensora_koordinatas_pec_id, dzest_sensora_koordinatas_pec_uzdevuma_id, dzest_odm_uzdevumu_pec_id
 from utils.karte import izveidot_karti
 
 KARTES_AUGSTUMS = 600
@@ -19,12 +19,12 @@ def uzstadit_state():
     st.session_state.odm_uzdevums = None
     st.session_state.tif_fails = None
 
-def apstiprinat_koordinatu(izveleta_ierice):
+def apstiprinat_koordinatu(sensora_id):
     if st.session_state.odm_uzdevums:
-        atjauninat_sensora_koordinatas_pec_id(st.session_state.odm_uzdevums["id"], izveleta_ierice, st.session_state.izveleta_koordinate)
+        atjauninat_sensora_koordinatas_pec_id(st.session_state.odm_uzdevums["id"], sensora_id, st.session_state.izveleta_koordinate)
 
     st.session_state.spiediena_rezims = False
-    st.session_state.sensora_ierices[izveleta_ierice]["koordinatas"] = st.session_state.izveleta_koordinate
+    st.session_state.sensora_ierices[sensora_id]["koordinatas"] = st.session_state.izveleta_koordinate
     st.session_state.izveleta_koordinate = None
 
 def tif_datuma_izmaina():
@@ -74,6 +74,18 @@ def izveleties_karti(odm_uzdevums):
         st.session_state.ortofoto_sensora_datums = db_odm_uzdevums["datums"]
         st.session_state.odm_uzdevums = odm_uzdevums
 
+def dzest_koordinatu(sensora_id):
+    st.session_state.sensora_ierices[sensora_id]["koordinatas"] = [None, None]
+
+    if st.session_state.odm_uzdevums:
+        atjauninat_sensora_koordinatas_pec_id(st.session_state.odm_uzdevums["id"], sensora_id, [None, None])
+
+def koordinatas_izvele(sensora_id):
+    if not st.session_state.spiediena_rezims:
+        st.button("Izvēlēties koordinātu", icon="🗺️", on_click=lambda: st.session_state.update(spiediena_rezims=True))
+    else:
+        st.button("Apstiprināt koordinātu", icon="💾", on_click=apstiprinat_koordinatu, args=(sensora_id, ))
+
 @st.dialog("Izvēlaties GeoTIFF kartes failu")
 def izvēlēties_failu():
     st.warning("Kartes operācijas ar GeoTIFF failu būs ievērojami lēnākas nekā caur sistēmas kartes izveides procesu!", icon="⚠️")
@@ -104,6 +116,7 @@ def lejupladet_karti(uzdevuma_id, nosaukums):
 @st.dialog("Vai Jūs tiešām vēlaties dzēst karti?")
 def izdzest_karti(uzdevuma_id):
     if st.button("Dzēst karti", icon="🗑️"):
+        dzest_odm_uzdevumu_pec_id(uzdevuma_id)
         izdzest_uzdevumu_pec_id(uzdevuma_id)
         st.session_state.odm_uzdevumi=  None
         st.rerun()
@@ -140,27 +153,31 @@ if st.session_state.tif_fails or st.session_state.odm_uzdevums:
 
         kartes_konteineris = st.container()
 
-        bez_koordinatas_ierices = [ierices_id for ierices_id, ierices_dati in st.session_state.sensora_ierices.items() if not ierices_dati["koordinatas"][0]]
-        ar_koordinatas_ierices = [ierices_id for ierices_id, ierices_dati in st.session_state.sensora_ierices.items() if ierices_dati["koordinatas"][0]]
+        bez_koordinatas_sensoru_id = [ierices_id for ierices_id, ierices_dati in st.session_state.sensora_ierices.items() if not ierices_dati["koordinatas"][0]]
+        ar_koordinatas_sensoru_id = [ierices_id for ierices_id, ierices_dati in st.session_state.sensora_ierices.items() if ierices_dati["koordinatas"][0]]
 
-        koord_izveles_cilne, koord_redigesanas_cilne = st.tabs(["Koordinātas izvēle", "Koordinātas rediģēšana"])
-        with koord_izveles_cilne:
-            if bez_koordinatas_ierices:
-                #st.info(f"Nepieciešams izvēlēties koordinātas {len(bez_koordinatas_ierices)} ierīcēm: {', '.join(bez_koordinatas_ierices)}.")
-                izveleta_ierice = st.selectbox("Izvēlies ierīci, kurai uzstādīt koordinātas:", bez_koordinatas_ierices)
+        darbibas = {}
+        if bez_koordinatas_sensoru_id:
+            darbibas["📌 Uzstādīt sensora koordinātu"] = 0
+        if ar_koordinatas_sensoru_id:
+            darbibas["✍🏼 Mainīt koordinātas"] = 1
+            darbibas["🗑️ Dzēst koordinatas"] = 2
 
-                if not st.session_state.spiediena_rezims:
-                    st.button("Izvēlēties koordinātas", icon="🗺️", on_click=lambda: st.session_state.update(spiediena_rezims=True))
-                else:
-                    st.button("Apstiprināt koordinātas", icon="💾", on_click=apstiprinat_koordinatu, args=(izveleta_ierice, ))
+        if darbibas:
+            darbiba = st.selectbox("Izvēlies sensoru koordinātas darbību:", darbibas)
+
+            if darbibas[darbiba] == 0:
+                uzstades_sesnora_id = st.selectbox("Izvēlies sensoru, kuram uzstādīt koordinātas:", bez_koordinatas_sensoru_id)
+
+                koordinatas_izvele(uzstades_sesnora_id)
+            elif darbibas[darbiba] == 1:
+                mainama_sensora_id = st.selectbox("Izvēlaties sensoru, kuram mainīt koordinātu:", ar_koordinatas_sensoru_id)
+
+                koordinatas_izvele(mainama_sensora_id)
             else:
-                st.info("Visas sensoru ierīces koordinātas ir iestatītas. Lai rediģētu vai dzēstu koordinātas, dodaties uz 'Koordinātas rediģēšana' cilni.")
-        with koord_redigesanas_cilne:
-            if ar_koordinatas_ierices:
-                darbiba = st.selectbox("Izvēlies rediģēšanas darbību:", ["Mainīt koordinātas", "Dzēst koordinatas"])
-                darbibas_ierice = st.selectbox("Izvēlaties sensora ierīci:", ar_koordinatas_ierices)
-            else:
-                st.info("Nevienai sensora ierīcei nav uzstādītas koordinātas. Lai uzstādītu koordinātas, dotaties uz 'Koordinātas izvēle' cilni.")
+                dzesama_sensora_id = st.selectbox("Izvēlaties sensoru, kuram dzēst koordinātu:", ar_koordinatas_sensoru_id)
+                st.button("Dzēst koordinātu", icon="🗑️", on_click=dzest_koordinatu, args=(dzesama_sensora_id, ))
+
         with kartes_konteineris:
             renderet_karti()
 

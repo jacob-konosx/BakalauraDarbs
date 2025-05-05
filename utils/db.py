@@ -1,7 +1,7 @@
 import streamlit as st
 from psycopg2 import connect, sql, extras
 
-@st.cache_resource
+@st.cache_resource(show_spinner="Savienojas ar datu bāzi")
 def db_savienojums():
     db = st.secrets["postgres_db"]
 
@@ -88,5 +88,10 @@ def atjauninat_sensora_koordinatas_pec_id(uzdevuma_id, sensora_id, koordinatas):
 ### Dzēšanas funkcijas
 def dzest_sensora_koordinatas_pec_uzdevuma_id(uzdevuma_id):
     vaicajums = "DELETE FROM sensoru_koordinatas WHERE uzdevuma_id IN (%s)"
+
+    vaicat_db(vaicajums, (uzdevuma_id,), rediget_rindu=True)
+
+def dzest_odm_uzdevumu_pec_id(uzdevuma_id):
+    vaicajums = "DELETE FROM odm_uzdevumi WHERE id IN (%s)"
 
     vaicat_db(vaicajums, (uzdevuma_id,), rediget_rindu=True)
