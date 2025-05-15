@@ -43,12 +43,13 @@ else:
 
     if "galvene" not in sikdatne or not sikdatne["galvene"]:
         uzstadit_odm_savienojumu(sikdatne)
-    if "galvene" not in sikdatne or not sikdatne["galvene"]:
-        st.header("Neizdevās savienot ar ODM API.")
-        st.text("ODM ir kritiska sistēmas komponente. Lūdzu mēģiniet savienoties, lai turpinātu tīmekļa vietnes darbību.")
-        st.button("Savienot ar ODM", icon="🔄", on_click=uzstadit_odm_savienojumu, args=(sikdatne,))
-        st.stop()
 
+        if "galvene" not in sikdatne or not sikdatne["galvene"]:
+            st.header("Neizdevās savienot ar ODM API.")
+            st.text("ODM ir kritiska sistēmas komponente. Lūdzu mēģiniet savienoties, lai turpinātu tīmekļa vietnes darbību.")
+            if st.button("Savienot ar ODM", icon="🔄"):
+                st.rerun()
+            st.stop()
     if "galvene" not in st.session_state:
         st.session_state.galvene = json.loads(sikdatne["galvene"])
 

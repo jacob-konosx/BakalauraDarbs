@@ -33,7 +33,7 @@ def dabut_galveni():
 
         return {"Authorization": f"JWT {atb.json()['token']}"}
     except Exception as e:
-        st.error(f"Kļūda ODM savienojumā: {e}")
+        st.error("Kļūda WebODM savienojumā")
 
 def pieprasit_odm(metode, url, dati=None, faili=None, stream=False):
     galvene = json.loads(st.session_state.sikdatne["galvene"])
