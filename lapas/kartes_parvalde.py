@@ -65,7 +65,7 @@ def renderet_karti():
 
             st.rerun(scope="fragment")
     else:
-        folium_static(m, width=None, height=KARTES_AUGSTUMS)
+        st_folium(m, width=None, height=KARTES_AUGSTUMS, returned_objects=[])
 
 def izveleties_karti(odm_uzdevums):
     db_odm_uzdevums = dabut_odm_uzdevumu_pec_id(odm_uzdevums["id"])
@@ -121,8 +121,12 @@ def izdzest_karti(uzdevuma_id):
         st.session_state.odm_uzdevumi=  None
         st.rerun()
 
-st.title("Ortofoto kartes")
 if st.session_state.tif_fails or st.session_state.odm_uzdevums:
+    if st.session_state.odm_uzdevums:
+        st.title(st.session_state.odm_uzdevums["name"])
+    else:
+        st.title("GeoTIFF karte")
+
     if not st.session_state.ortofoto_sensora_dati:
         dienas_diapzona = [st.session_state.ortofoto_sensora_datums, st.session_state.ortofoto_sensora_datums + datetime.timedelta(days=1)]
         st.session_state.ortofoto_sensora_dati = dabut_visus_sensora_ierakstus(dienas_diapzona)
@@ -188,6 +192,7 @@ if st.session_state.tif_fails or st.session_state.odm_uzdevums:
         else:
             st.info(f"Sensora dati nav pieejami {st.session_state.ortofoto_sensora_datums.strftime('%d.%m.%Y')}. Lūdzu izvēlaties citu datumu!", icon="ℹ️")
 else:
+    st.title("Ortofoto kartes")
     datu_atjauninasanas_kolonna, tuksa_kolonna, tif_izveles_kolonna = st.columns([1.5, 3.5, 1.5])
     with datu_atjauninasanas_kolonna:
         st.button("Atjaunināt sarakstu", on_click=lambda: st.session_state.update(odm_uzdevumi=dabut_lietotaja_uzdevumus()), icon="🔄")

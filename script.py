@@ -13,12 +13,6 @@ st.markdown(stils, unsafe_allow_html=True)
 if "izrakstities" not in st.session_state:
     st.session_state.izrakstities = False
 
-def uzstadit_odm_savienojumu(sikdatne):
-    galvene = dabut_galveni()
-    if galvene:
-        sikdatne["galvene"] = json.dumps(galvene)
-        st.toast("ODM savienots veiksmīgi.", icon="✅")
-
 def izrakstit_lietotaju(sikdatne):
     sikdatne["odm_projekta_id"] = ""
     sikdatne["galvene"] = ""
@@ -33,7 +27,7 @@ if not sikdatne.ready():
     st.stop()
 st.session_state.sikdatne = sikdatne
 
-if not st.experimental_user.is_logged_in:
+if not st.user.is_logged_in:
     st.header("Tīmekļa vietne ir privāta")
     st.text("Lūdzu pierakstieties, lai turpinātu tīmekļa vietnes darbību.")
     st.button("Pierakstīties ar Google", on_click=st.login, icon="🔐")
@@ -42,9 +36,11 @@ else:
         st.logout()
 
     if "galvene" not in sikdatne or not sikdatne["galvene"]:
-        uzstadit_odm_savienojumu(sikdatne)
-
-        if "galvene" not in sikdatne or not sikdatne["galvene"]:
+        galvene = dabut_galveni()
+        if galvene:
+            sikdatne["galvene"] = json.dumps(galvene)
+            st.toast("ODM savienots veiksmīgi.", icon="✅")
+        else:
             st.header("Neizdevās savienot ar ODM API.")
             st.text("ODM ir kritiska sistēmas komponente. Lūdzu mēģiniet savienoties, lai turpinātu tīmekļa vietnes darbību.")
             if st.button("Savienot ar ODM", icon="🔄"):
@@ -77,7 +73,7 @@ else:
     if "odm_projekta_id" not in st.session_state:
         st.session_state.odm_projekta_id = sikdatne["odm_projekta_id"]
 
-    st.sidebar.header(f"Sveicināti, :blue[{st.experimental_user.name}]!")
+    st.sidebar.header(f"Sveicināti, :blue[{st.user.name}]!")
     st.sidebar.button("Izrakstīties", icon="↪", on_click=izrakstit_lietotaju, args=(sikdatne,))
 
     majas_lapa = st.Page("lapas/kartes_izveide.py", title="Kartes izveide", icon="🪡")

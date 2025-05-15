@@ -38,7 +38,7 @@ def vaicat_db(vaicajums, argumenti=(), dabut_vienu=True, rediget_rindu=False):
 def vai_pilnvarots_epasts():
     vaicajums = "SELECT * FROM autorizeti_epasti WHERE epasts = %s"
 
-    rezultats = vaicat_db(vaicajums, (st.experimental_user.email,))
+    rezultats = vaicat_db(vaicajums, (st.user.email,))
 
     return rezultats is not None
 
@@ -46,7 +46,7 @@ def vai_pilnvarots_epasts():
 def dabut_lietotaju_pec_epasta():
     vaicajums = "SELECT * FROM lietotaji WHERE epasts = %s"
 
-    return vaicat_db(vaicajums, (st.experimental_user.email,))
+    return vaicat_db(vaicajums, (st.user.email,))
 
 def dabut_odm_uzdevumu_pec_id(uzdevuma_id):
     vaicajums = "SELECT * FROM odm_uzdevumi WHERE id = %s"
@@ -62,7 +62,7 @@ def dabut_sensoru_koordinatas_pec_uzdevuma_id(uzdevuma_id):
 def izveidot_lietotaju(projekta_id):
     vaicajums = "INSERT INTO lietotaji (projekta_id, epasts) VALUES (%s, %s)"
 
-    vaicat_db(vaicajums, (projekta_id, st.experimental_user.email,), rediget_rindu=True)
+    vaicat_db(vaicajums, (projekta_id, st.user.email,), rediget_rindu=True)
 
 def izveidot_odm_uzdevumu(uzdevuma_id, datums):
     vaicajums = "INSERT INTO odm_uzdevumi (id, datums) VALUES (%s, %s)"

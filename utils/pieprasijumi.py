@@ -48,7 +48,6 @@ def pieprasit_odm(metode, url, dati=None, faili=None, stream=False):
 
         atb.raise_for_status()
         return atb
-
     except HTTPError as e:
         if e.response.status_code == 403:
             galvene = dabut_galveni()
@@ -98,7 +97,7 @@ def lejupladet_tif_pec_id(kartes_id):
 def izveidot_projektu():
     atb = pieprasit_odm("POST", f"{st.secrets.odm_url}/projects/",
             dati={
-                "name": st.experimental_user.email,
+                "name": st.user.email,
             }
         )
 
