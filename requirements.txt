@@ -7,3 +7,4 @@ pyproj
 pillow
 altair
 st-cookies-manager
+Authlib
