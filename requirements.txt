@@ -4,6 +4,6 @@ folium
 rasterio
 branca
 pyproj
-PIL
+pillow
 altair
 st-cookies-manager
