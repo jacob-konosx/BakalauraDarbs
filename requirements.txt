@@ -6,4 +6,4 @@ branca
 pyproj
 PIL
 altair
-st_cookies_manager
+st-cookies-manager
