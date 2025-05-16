@@ -41,33 +41,6 @@ def tif_datuma_izmaina():
 if "odm_uzdevumi" not in st.session_state:
     uzstadit_state()
 
-@st.fragment
-def renderet_karti():
-    m = izveidot_karti(
-        st.session_state.izveleta_koordinate,
-        st.session_state.sensora_ierices,
-        st.session_state.ortofoto_sensora_laiks,
-        st.session_state.galvene,
-        st.session_state.odm_uzdevums,
-        st.session_state.tif_fails
-    )
-
-    if st.session_state.spiediena_rezims:
-        kartes_dati = st_folium(
-            m,
-            width=None,
-            height=KARTES_AUGSTUMS,
-        )
-
-        if kartes_dati.get("last_clicked") :
-            lat = kartes_dati["last_clicked"]["lat"]
-            lon = kartes_dati["last_clicked"]["lng"]
-            st.session_state.izveleta_koordinate = [lat, lon]
-
-            st.rerun(scope="fragment")
-    else:
-        st_folium(m, width=None, height=KARTES_AUGSTUMS, returned_objects=[])
-
 def izveleties_karti(odm_uzdevums):
     db_odm_uzdevums = dabut_odm_uzdevumu_pec_id(odm_uzdevums["id"])
 
@@ -80,13 +53,6 @@ def dzest_koordinatu(sensora_id):
 
     if st.session_state.odm_uzdevums:
         atjauninat_sensora_koordinatas_pec_id(st.session_state.odm_uzdevums["id"], sensora_id, [None, None])
-
-def koordinatas_izvele(sensora_id):
-    if not st.session_state.spiediena_rezims:
-        st.button("Izvēlēties koordinātu", icon="🗺️", on_click=lambda: st.session_state.update(spiediena_rezims=True))
-    else:
-        st.button("Atcelt koordinatu izveli")
-        st.button("Apstiprināt koordinātu", icon="💾", on_click=apstiprinat_koordinatu, args=(sensora_id, ), disabled=st.session_state.izveleta_koordinate==None)
 
 @st.dialog("Izvēlaties GeoTIFF kartes failu")
 def izvēlēties_failu():
@@ -157,7 +123,27 @@ if st.session_state.tif_fails or st.session_state.odm_uzdevums:
         with atiestatit_kolona:
             st.button("❌", on_click=uzstadit_state, help="Aizvērt karti")
 
-        kartes_konteineris = st.container()
+        m = izveidot_karti(
+            st.session_state.izveleta_koordinate,
+            st.session_state.sensora_ierices,
+            st.session_state.ortofoto_sensora_laiks,
+            st.session_state.galvene,
+            st.session_state.odm_uzdevums,
+            st.session_state.tif_fails
+        )
+
+        kartes_dati = st_folium(
+            m,
+            width=None,
+            height=KARTES_AUGSTUMS,
+        )
+
+        if st.session_state.spiediena_rezims:
+            if kartes_dati.get("last_clicked") :
+                lat = kartes_dati["last_clicked"]["lat"]
+                lon = kartes_dati["last_clicked"]["lng"]
+                st.session_state.izveleta_koordinate = [lat, lon]
+                st.rerun()
 
         bez_koordinatas_sensoru_id = [ierices_id for ierices_id, ierices_dati in st.session_state.sensora_ierices.items() if not ierices_dati["koordinatas"][0]]
         ar_koordinatas_sensoru_id = [ierices_id for ierices_id, ierices_dati in st.session_state.sensora_ierices.items() if ierices_dati["koordinatas"][0]]
@@ -172,20 +158,20 @@ if st.session_state.tif_fails or st.session_state.odm_uzdevums:
         if darbibas:
             darbiba = st.selectbox("Izvēlies sensoru koordinātas darbību:", darbibas)
 
-            if darbibas[darbiba] == 0:
-                uzstades_sesnora_id = st.selectbox("Izvēlies sensoru, kuram uzstādīt koordinātas:", bez_koordinatas_sensoru_id)
+            if not darbibas[darbiba] == 2:
+                    if darbibas[darbiba] == 0:
+                        sensora_id = st.selectbox("Izvēlies sensoru, kuram uzstādīt koordinātas:", bez_koordinatas_sensoru_id)
+                    else:
+                        sensora_id = st.selectbox("Izvēlaties sensoru, kuram mainīt koordinātu:", ar_koordinatas_sensoru_id)
 
-                koordinatas_izvele(uzstades_sesnora_id)
-            elif darbibas[darbiba] == 1:
-                mainama_sensora_id = st.selectbox("Izvēlaties sensoru, kuram mainīt koordinātu:", ar_koordinatas_sensoru_id)
-
-                koordinatas_izvele(mainama_sensora_id)
+                    if not st.session_state.spiediena_rezims:
+                        st.button("Izvēlēties koordinātu", icon="🗺️", on_click=lambda:st.session_state.update(spiediena_rezims=True))
+                    else:
+                        st.button("Apstiprināt koordinātu", icon="💾", on_click=apstiprinat_koordinatu, args=(sensora_id, ), disabled=st.session_state.izveleta_koordinate==None)
+                        st.button("Atcelt koordinatu izvēli", icon="❌", on_click=lambda: st.session_state.update({"spiediena_rezims":False, "izveleta_koordinate":None}))
             else:
                 dzesama_sensora_id = st.selectbox("Izvēlaties sensoru, kuram dzēst koordinātu:", ar_koordinatas_sensoru_id)
                 st.button("Dzēst koordinātu", icon="🗑️", on_click=dzest_koordinatu, args=(dzesama_sensora_id, ))
-
-        with kartes_konteineris:
-            renderet_karti()
 
     with sensora_datu_cilne:
         if st.session_state.ortofoto_sensora_dati:
