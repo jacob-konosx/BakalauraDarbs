@@ -1,5 +1,5 @@
 import streamlit as st
-from psycopg import connect, sql, extras
+from psycopg import connect, sql
 
 @st.cache_resource(show_spinner="Savienojas ar datu bāzi")
 def db_savienojums():
@@ -10,7 +10,7 @@ def db_savienojums():
         dbname=db["datu_baze"],
         user=db["lietotajs"],
         password=db["parole"],
-        port=db["port"]
+        port=db["port"],
     )
 
 def vaicat_db(vaicajums, argumenti=(), dabut_vienu=True, rediget_rindu=False):
@@ -25,7 +25,7 @@ def vaicat_db(vaicajums, argumenti=(), dabut_vienu=True, rediget_rindu=False):
 
     vaicajums = sql.SQL(vaicajums)
     try:
-        with savienojums.cursor(cursor_factory=extras.DictCursor) as cursor:
+        with savienojums.cursor() as cursor:
             cursor.execute(vaicajums, argumenti)
 
             if rediget_rindu:
