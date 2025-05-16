@@ -47,6 +47,7 @@ def renderet_karti():
         st.session_state.izveleta_koordinate,
         st.session_state.sensora_ierices,
         st.session_state.ortofoto_sensora_laiks,
+        st.session_state.galvene,
         st.session_state.odm_uzdevums,
         st.session_state.tif_fails
     )
@@ -84,12 +85,13 @@ def koordinatas_izvele(sensora_id):
     if not st.session_state.spiediena_rezims:
         st.button("Izvēlēties koordinātu", icon="🗺️", on_click=lambda: st.session_state.update(spiediena_rezims=True))
     else:
-        st.button("Apstiprināt koordinātu", icon="💾", on_click=apstiprinat_koordinatu, args=(sensora_id, ))
+        st.button("Atcelt koordinatu izveli")
+        st.button("Apstiprināt koordinātu", icon="💾", on_click=apstiprinat_koordinatu, args=(sensora_id, ), disabled=st.session_state.izveleta_koordinate==None)
 
 @st.dialog("Izvēlaties GeoTIFF kartes failu")
 def izvēlēties_failu():
     st.warning("Kartes operācijas ar GeoTIFF failu būs ievērojami lēnākas nekā caur sistēmas kartes izveides procesu!", icon="⚠️")
-    st.page_link("lapas/kartes_izveide.py", label="Doties uz kartes izveidi", icon="🪡")
+    st.page_link("lapas/ortofoto_izveide.py", label="Doties uz kartes izveidi", icon="🪡")
 
     izveletais_datums = st.date_input("Izvēlaties ortofoto datumu:", format="DD.MM.YYYY", value=None)
     tif_fails = st.file_uploader("Izvēlieties GeoTIFF failu:", type=["tif"], accept_multiple_files=False)
@@ -123,7 +125,7 @@ def izdzest_karti(uzdevuma_id):
 
 if st.session_state.tif_fails or st.session_state.odm_uzdevums:
     if st.session_state.odm_uzdevums:
-        st.title(st.session_state.odm_uzdevums["name"])
+        st.title(f"Karte - {st.session_state.odm_uzdevums['name']}")
     else:
         st.title("GeoTIFF karte")
 
@@ -192,12 +194,12 @@ if st.session_state.tif_fails or st.session_state.odm_uzdevums:
         else:
             st.info(f"Sensora dati nav pieejami {st.session_state.ortofoto_sensora_datums.strftime('%d.%m.%Y')}. Lūdzu izvēlaties citu datumu!", icon="ℹ️")
 else:
-    st.title("Ortofoto kartes")
-    datu_atjauninasanas_kolonna, tuksa_kolonna, tif_izveles_kolonna = st.columns([1.5, 3.5, 1.5])
+    st.title("Manas ortofoto kartes")
+    datu_atjauninasanas_kolonna, tuksa_kolonna, tif_izveles_kolonna = st.columns([1.5, 5, 1.5])
     with datu_atjauninasanas_kolonna:
-        st.button("Atjaunināt sarakstu", on_click=lambda: st.session_state.update(odm_uzdevumi=dabut_lietotaja_uzdevumus()), icon="🔄")
+        st.button("Atjaunināt", on_click=lambda: st.session_state.update(odm_uzdevumi=dabut_lietotaja_uzdevumus()), icon="🔄")
     with tif_izveles_kolonna:
-        st.button("Atvērt GeoTIFF failu", icon="📂", on_click=izvēlēties_failu)
+        st.button("Atvērt GeoTIFF", icon="📂", on_click=izvēlēties_failu)
 
     if not st.session_state.odm_uzdevumi:
         st.session_state.odm_uzdevumi= dabut_lietotaja_uzdevumus()
@@ -216,7 +218,7 @@ else:
                 with col3:
                     st.button("🗺️", key="izvele_"+uzdevuma_id, disabled=not uzdevums["status"]==40, help="Atvērt ortofoto karti" if uzdevums["status"]==40 else "Karte tiek izveidota", on_click=izveleties_karti, args=(uzdevums,))
                 with col4:
-                    st.button("💾", key="lejup_"+uzdevuma_id, on_click=lejupladet_karti, args=(uzdevuma_id, uzdevums["name"]), help="Saglabāt GeoTIFF failu")
+                    st.button("💾", key="lejup_"+uzdevuma_id, disabled=not uzdevums["status"]==40, on_click=lejupladet_karti, args=(uzdevuma_id, uzdevums["name"]), help="Saglabāt GeoTIFF failu")
                 with col5:
                     st.button("🗑️", key="dzest_"+uzdevuma_id, on_click=izdzest_karti, args=(uzdevuma_id,), help="Dzēst GeoTIFF karti")
     else:

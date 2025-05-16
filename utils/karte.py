@@ -84,7 +84,7 @@ def ieladet_tif_datus(tif):
     return centra_lat, centra_lon, data_url, folium_robeza
 
 @st.cache_data(show_spinner="Tiek ģenerēta karte")
-def izveidot_karti(izveleta_koordinate, visas_sensora_ierices, ortofoto_sensora_laiks, odm_uzdevums=None, tif_fails=None):
+def izveidot_karti(izveleta_koordinate, visas_sensora_ierices, ortofoto_sensora_laiks, galvene, odm_uzdevums=None, tif_fails=None):
     if odm_uzdevums:
         centra_lat, centra_lon = izrekinat_ortofoto_centru(odm_uzdevums["extent"])
     else:
@@ -108,7 +108,7 @@ def izveidot_karti(izveleta_koordinate, visas_sensora_ierices, ortofoto_sensora_
 
     ortofoto = None
     if odm_uzdevums:
-        ortofoto_flizes_url = f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{odm_uzdevums['id']}/orthophoto/tiles/{{z}}/{{x}}/{{y}}?jwt={st.session_state.galvene['Authorization'].replace('JWT ', '')}"
+        ortofoto_flizes_url = f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{odm_uzdevums['id']}/orthophoto/tiles/{{z}}/{{x}}/{{y}}?jwt={galvene['Authorization'].replace('JWT ', '')}"
 
         ortofoto = folium.TileLayer(
             tiles=ortofoto_flizes_url,

@@ -76,8 +76,8 @@ else:
     st.sidebar.header(f"Sveicināti, :blue[{st.user.name}]!")
     st.sidebar.button("Izrakstīties", icon="↪", on_click=izrakstit_lietotaju, args=(sikdatne,))
 
-    majas_lapa = st.Page("lapas/kartes_izveide.py", title="Kartes izveide", icon="🪡")
-    tif_izvele = st.Page("lapas/kartes_parvalde.py", title="Ortofoto kartes", icon="🗺️")
+    majas_lapa = st.Page("lapas/ortofoto_izveide.py", title="Ortofoto izveide", icon="🪡")
+    tif_izvele = st.Page("lapas/ortofoto_parvalde.py", title="Mani ortofoto", icon="🗺️")
     sensoru_lapa = st.Page("lapas/sensoru_dati.py", title="Sensoru dati", icon="📡")
     pg = st.navigation({"Kartes": [majas_lapa, tif_izvele], "Dati": [sensoru_lapa]})
 

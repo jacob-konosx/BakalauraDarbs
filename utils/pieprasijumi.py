@@ -62,23 +62,6 @@ def pieprasit_odm(metode, url, dati=None, faili=None, stream=False):
         else:
             st.error(f"Kļūda pieprasījumā: {e}")
 
-def izdzest_uzdevumu_pec_id(kartes_id):
-    atb = pieprasit_odm("POST", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{kartes_id}/remove/")
-
-    if atb:
-        return atb.json()
-
-def izveidot_karti(atteli, kartes_nosaukums, ortofoto_izskirtspeja):
-    atb = pieprasit_odm("POST", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/",
-            faili=atteli,
-            dati={
-                "options": json.dumps([{'name': "orthophoto-resolution", 'value': ortofoto_izskirtspeja}, *ODM_IESTATIJUMI]),
-                "name": kartes_nosaukums
-            }
-        )
-    if atb:
-        return atb.json()
-
 def dabut_uzdevuma_info_pec_id(kartes_id):
     atb = pieprasit_odm("GET", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{kartes_id}")
 
@@ -94,18 +77,43 @@ def lejupladet_tif_pec_id(kartes_id):
     if atb:
         return atb.content
 
+def dabut_lietotaja_uzdevumus():
+    atb = pieprasit_odm("GET", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/",)
+
+    if atb:
+        return atb.json()
+
+def izveidot_karti(kartes_nosaukums, ortofoto_izskirtspeja):
+    atb = pieprasit_odm("POST", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/",
+            dati={
+                "options": json.dumps([{'name': "orthophoto-resolution", 'value': ortofoto_izskirtspeja}, *ODM_IESTATIJUMI]),
+                "name": kartes_nosaukums,
+                "partial": True
+            }
+        )
+    if atb:
+        return atb.json()
+
+def izdzest_uzdevumu_pec_id(uzdevuma_id):
+    atb = pieprasit_odm("POST", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{uzdevuma_id}/remove/")
+
+    if atb:
+        return atb.json()
+
+def augsupieladet_odm_attelus_pec_id(uzdevuma_id, atteli):
+    pieprasit_odm("POST", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{uzdevuma_id}/upload/",
+        faili=atteli
+    )
+
+def sakt_uzdevumu_pec_id(uzdevuma_id):
+    pieprasit_odm("POST", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{uzdevuma_id}/commit/")
+
 def izveidot_projektu():
     atb = pieprasit_odm("POST", f"{st.secrets.odm_url}/projects/",
             dati={
                 "name": st.user.email,
             }
         )
-
-    if atb:
-        return atb.json()
-
-def dabut_lietotaja_uzdevumus():
-    atb = pieprasit_odm("GET", f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/",)
 
     if atb:
         return atb.json()
