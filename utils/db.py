@@ -1,5 +1,5 @@
 import streamlit as st
-from psycopg2 import connect, sql, extras
+from psycopg import connect, sql, extras
 
 @st.cache_resource(show_spinner="Savienojas ar datu bāzi")
 def db_savienojums():
