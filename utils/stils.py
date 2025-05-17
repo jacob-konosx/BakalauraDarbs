@@ -68,7 +68,7 @@ def dabut_stilu():
             }}
 
             div[data-testid="stFileUploaderDropzoneInstructions"] div::after {{
-                content: "Izvēlēties TIF failu (200MB faila limits)";
+                content: "Izvēlēties .ZIP failu (200MB faila limits)";
             }}
 
             section[data-testid="stFileUploaderDropzone"]{{
