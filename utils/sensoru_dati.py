@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 from utils.pieprasijumi import dabut_sensora_datus
-from utils.db import dabut_sensoru_koordinatas_pec_uzdevuma_id, izveidot_sensoru_koordinatas
+from utils.db import db_dabut_sensoru_koordinatas_pec_uzdevuma_id, db_izveidot_sensoru_koordinatas
 
 opcijas = {
     "air temperature": "Gaisa Temperatūra (°C)",
@@ -35,14 +35,14 @@ def ieladet_sensora_datus():
     st.session_state.sensora_ierices, st.session_state.ortofoto_sensora_laiks = izveidot_sensora_ierices(st.session_state.ortofoto_sensora_dati)
 
     if st.session_state.odm_uzdevums:
-        db_sensoru_koordinatas = dabut_sensoru_koordinatas_pec_uzdevuma_id(st.session_state.odm_uzdevums["id"])
+        db_sensoru_koordinatas = db_dabut_sensoru_koordinatas_pec_uzdevuma_id(st.session_state.odm_uzdevums["id"])
 
         if db_sensoru_koordinatas:
             for koordinata in db_sensoru_koordinatas:
                 st.session_state.sensora_ierices[koordinata["sensora_id"]]["koordinatas"] = [koordinata["platums"], koordinata["garums"]]
         else:
             for sensora_id in st.session_state.sensora_ierices:
-                izveidot_sensoru_koordinatas(st.session_state.odm_uzdevums["id"], sensora_id, [None, None])
+                db_izveidot_sensoru_koordinatas(st.session_state.odm_uzdevums["id"], sensora_id, [None, None])
 
 @st.cache_data(show_spinner="Tiek iegūti sensora dati")
 def dabut_visus_sensora_ierakstus(datumu_diapzona):

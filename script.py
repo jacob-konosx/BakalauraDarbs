@@ -3,7 +3,7 @@ import streamlit as st
 from st_cookies_manager import EncryptedCookieManager
 from utils.pieprasijumi import dabut_galveni, izveidot_projektu
 from utils.stils import dabut_stilu
-from utils.db import dabut_lietotaju_pec_epasta, vai_pilnvarots_epasts, izveidot_lietotaju
+from utils.db import db_dabut_lietotaju_pec_epasta, db_vai_pilnvarots_epasts, db_izveidot_lietotaju
 
 st.set_page_config(layout="wide")
 
@@ -52,14 +52,14 @@ else:
     if "odm_projekta_id" not in sikdatne or not sikdatne["odm_projekta_id"]:
         projekta_id = None
 
-        db_lietotajs = dabut_lietotaju_pec_epasta()
+        db_lietotajs = db_dabut_lietotaju_pec_epasta()
         if not db_lietotajs:
-            if vai_pilnvarots_epasts():
+            if db_vai_pilnvarots_epasts():
                 izveidotais_projekts = izveidot_projektu()
 
                 if izveidotais_projekts:
                     projekta_id = izveidotais_projekts["id"]
-                    izveidot_lietotaju(projekta_id)
+                    db_izveidot_lietotaju(projekta_id)
             else:
                 st.header("Konts nav pilnvarots")
                 st.info("Jūsu e-pasta adrese nav pilnvarota sitēmā. Sazinaties ar tīmekļa lietotnes administratoru, lai pilnvarotu Jūsu e-pasta adresi.", icon="ℹ️")

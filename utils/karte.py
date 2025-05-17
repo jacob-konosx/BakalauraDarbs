@@ -112,7 +112,7 @@ def izveidot_karti(izveleta_koordinate, visas_sensora_ierices, ortofoto_sensora_
 
         ortofoto = folium.TileLayer(
             tiles=ortofoto_flizes_url,
-            attr='WebODM',
+            attr='WebODM ortofoto',
             name='Ortofoto karte',
             overlay=True,
             z_index=10,

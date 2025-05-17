@@ -2,8 +2,8 @@ import datetime
 from streamlit_folium import st_folium, folium_static
 import streamlit as st
 from utils.sensoru_dati import zimet_sensora_datus, dabut_visus_sensora_ierakstus, ieladet_sensora_datus
-from utils.pieprasijumi import dabut_lietotaja_uzdevumus, lejupladet_tif_pec_id, izdzest_uzdevumu_pec_id
-from utils.db import dabut_odm_uzdevumu_pec_id, atjauninat_odm_uzdevuma_datumu_pec_id, atjauninat_sensora_koordinatas_pec_id, dzest_sensora_koordinatas_pec_uzdevuma_id, dzest_odm_uzdevumu_pec_id
+from utils.pieprasijumi import dabut_lietotaja_uzdevumus, lejupladet_tif_pec_id, izdzest_uzdevumu_pec_id, dabut_uzdevuma_info_pec_id
+from utils.db import db_dabut_odm_uzdevumu_pec_id, db_atjauninat_odm_uzdevuma_datumu_pec_id, db_atjauninat_sensora_koordinatas_pec_id, db_dzest_sensora_koordinatas_pec_uzdevuma_id, db_dzest_odm_uzdevumu_pec_id
 from utils.karte import izveidot_karti
 
 KARTES_AUGSTUMS = 600
@@ -21,7 +21,7 @@ def uzstadit_state():
 
 def apstiprinat_koordinatu(sensora_id):
     if st.session_state.odm_uzdevums:
-        atjauninat_sensora_koordinatas_pec_id(st.session_state.odm_uzdevums["id"], sensora_id, st.session_state.izveleta_koordinate)
+        db_atjauninat_sensora_koordinatas_pec_id(st.session_state.odm_uzdevums["id"], sensora_id, st.session_state.izveleta_koordinate)
 
     st.session_state.spiediena_rezims = False
     st.session_state.sensora_ierices[sensora_id]["koordinatas"] = st.session_state.izveleta_koordinate
@@ -35,14 +35,15 @@ def tif_datuma_izmaina():
     st.session_state.ortofoto_sensora_dati = None
 
     if st.session_state.odm_uzdevums:
-        atjauninat_odm_uzdevuma_datumu_pec_id(st.session_state.odm_uzdevums["id"], st.session_state.ortofoto_sensora_datums)
-        dzest_sensora_koordinatas_pec_uzdevuma_id(st.session_state.odm_uzdevums["id"])
+        db_atjauninat_odm_uzdevuma_datumu_pec_id(st.session_state.odm_uzdevums["id"], st.session_state.ortofoto_sensora_datums)
+        db_dzest_sensora_koordinatas_pec_uzdevuma_id(st.session_state.odm_uzdevums["id"])
 
 if "odm_uzdevumi" not in st.session_state:
     uzstadit_state()
 
-def izveleties_karti(odm_uzdevums):
-    db_odm_uzdevums = dabut_odm_uzdevumu_pec_id(odm_uzdevums["id"])
+def izveleties_karti(uzdevuma_id):
+    odm_uzdevums = dabut_uzdevuma_info_pec_id(uzdevuma_id)
+    db_odm_uzdevums = db_dabut_odm_uzdevumu_pec_id(odm_uzdevums["id"])
 
     if db_odm_uzdevums:
         st.session_state.ortofoto_sensora_datums = db_odm_uzdevums["datums"]
@@ -52,7 +53,7 @@ def dzest_koordinatu(sensora_id):
     st.session_state.sensora_ierices[sensora_id]["koordinatas"] = [None, None]
 
     if st.session_state.odm_uzdevums:
-        atjauninat_sensora_koordinatas_pec_id(st.session_state.odm_uzdevums["id"], sensora_id, [None, None])
+        db_atjauninat_sensora_koordinatas_pec_id(st.session_state.odm_uzdevums["id"], sensora_id, [None, None])
 
 @st.dialog("Izvēlaties GeoTIFF kartes failu")
 def izvēlēties_failu():
@@ -84,7 +85,7 @@ def lejupladet_karti(uzdevuma_id, nosaukums):
 @st.dialog("Vai Jūs tiešām vēlaties dzēst karti?")
 def izdzest_karti(uzdevuma_id):
     if st.button("Dzēst karti", icon="🗑️"):
-        dzest_odm_uzdevumu_pec_id(uzdevuma_id)
+        db_dzest_odm_uzdevumu_pec_id(uzdevuma_id)
         izdzest_uzdevumu_pec_id(uzdevuma_id)
         st.session_state.odm_uzdevumi=  None
         st.rerun()
@@ -202,7 +203,7 @@ else:
                 with col2:
                     st.text(f"{dt.strftime('%d.%m.%Y %H:%M')} ⚙️: {5-uzdevums['options'][0]['value']}")
                 with col3:
-                    st.button("🗺️", key="izvele_"+uzdevuma_id, disabled=not uzdevums["status"]==40, help="Atvērt ortofoto karti" if uzdevums["status"]==40 else "Karte tiek izveidota", on_click=izveleties_karti, args=(uzdevums,))
+                    st.button("🗺️", key="izvele_"+uzdevuma_id, disabled=not uzdevums["status"]==40, help="Atvērt ortofoto karti" if uzdevums["status"]==40 else "Karte tiek izveidota", on_click=izveleties_karti, args=(uzdevuma_id,))
                 with col4:
                     st.button("💾", key="lejup_"+uzdevuma_id, disabled=not uzdevums["status"]==40, on_click=lejupladet_karti, args=(uzdevuma_id, uzdevums["name"]), help="Saglabāt GeoTIFF failu")
                 with col5:
