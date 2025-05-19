@@ -81,13 +81,13 @@ else:
     if "odm_projekta_id" not in st.session_state:
         st.session_state.odm_projekta_id = sikdatne["odm_projekta_id"]
 
-    st.sidebar.button("Atiestatīt WebODM žetonu", icon="🔄", on_click=iestatit_galveni, args=(sikdatne,),)
+    st.sidebar.button("Atiestatīt WebODM žetonu", icon="🔄", on_click=iestatit_galveni, args=(sikdatne,), help="Izmantojiet, ja ortofoto netiek vizualizēts korekti.")
     st.sidebar.header(f"Sveicināti, :blue[{st.user.name}]!")
     st.sidebar.button("Izrakstīties", icon="↪", on_click=izrakstit_lietotaju, args=(sikdatne,))
 
-    majas_lapa = st.Page("lapas/ortofoto_izveide.py", title="Ortofoto izveide", icon="🪡")
-    tif_izvele = st.Page("lapas/ortofoto_parvalde.py", title="Mani ortofoto", icon="🗺️")
-    sensoru_lapa = st.Page("lapas/sensoru_dati.py", title="Sensoru dati", icon="📡")
-    pg = st.navigation({"Kartes": [majas_lapa, tif_izvele], "Dati": [sensoru_lapa]})
+    ortofoto_izveide = st.Page("lapas/ortofoto_izveide.py", title="Ortofoto izveide", icon="🪡")
+    ortofoto_parvalde = st.Page("lapas/ortofoto_parvalde.py", title="Mani ortofoto", icon="🗺️")
+    sensoru_dati = st.Page("lapas/sensoru_dati.py", title="Sensoru dati", icon="📡")
+    pg = st.navigation({"Ortofoto": [ortofoto_izveide, ortofoto_parvalde], "Sensora Dati": [sensoru_dati]})
 
     pg.run()

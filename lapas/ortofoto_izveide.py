@@ -52,7 +52,7 @@ if st.session_state.uzdevums_augsupielade:
             progress = indeks / (failu_skaits - 1)
             progresa_josla.progress(progress, progresa_text)
 
-            atteli = [("images", (fails.name, fails, fails.type))]
+            atteli = [("images", (fails.name, fails, "image/jpg"))]
             augsupieladet_odm_attelus_pec_id(st.session_state.uzdevuma_id, atteli)
         else:
             sakt_uzdevumu_pec_id(st.session_state.uzdevuma_id)
@@ -102,12 +102,11 @@ else:
         if izveletais_zip:
             with zipfile.ZipFile(izveletais_zip) as zip_ref:
                 for fila_nosaukums in zip_ref.namelist():
-                    if fila_nosaukums.lower().endswith((".png", ".jpg", ".jpeg")):
+                    if fila_nosaukums.lower().endswith((".jpg", ".jpeg")):
                         with zip_ref.open(fila_nosaukums) as fails:
                             faila_baiti = BytesIO(fails.read())
 
                             faila_baiti.name = fila_nosaukums
-                            faila_baiti.type = mimetypes.guess_type(fila_nosaukums)[0] or "application/octet-stream"
 
                             atteli.append(faila_baiti)
 
