@@ -19,6 +19,17 @@ def izrakstit_lietotaju(sikdatne):
     st.session_state.izrakstities = True
     st.rerun()
 
+def iestatit_galveni(sikdatne):
+    galvene = dabut_galveni()
+
+    if galvene:
+        sikdatne["galvene"] = json.dumps(galvene)
+        st.toast("WebODM savienots veiksmīgi.", icon="✅")
+    else:
+        st.toast("Neizdevās savienoties ar WebODM.", icon="❌")
+
+    return galvene
+
 sikdatne = EncryptedCookieManager(
     prefix="st_",
     password=st.secrets.sikdatnes_parole,
@@ -36,11 +47,8 @@ else:
         st.logout()
 
     if "galvene" not in sikdatne or not sikdatne["galvene"]:
-        galvene = dabut_galveni()
-        if galvene:
-            sikdatne["galvene"] = json.dumps(galvene)
-            st.toast("ODM savienots veiksmīgi.", icon="✅")
-        else:
+        galvene = iestatit_galveni(sikdatne)
+        if not galvene:
             st.header("Neizdevās savienot ar ODM API.")
             st.text("ODM ir kritiska sistēmas komponente. Lūdzu mēģiniet savienoties, lai turpinātu tīmekļa vietnes darbību.")
             if st.button("Savienot ar ODM", icon="🔄"):
@@ -73,6 +81,7 @@ else:
     if "odm_projekta_id" not in st.session_state:
         st.session_state.odm_projekta_id = sikdatne["odm_projekta_id"]
 
+    st.sidebar.button("Atiestatīt WebODM žetonu", icon="🔄", on_click=iestatit_galveni, args=(sikdatne,),)
     st.sidebar.header(f"Sveicināti, :blue[{st.user.name}]!")
     st.sidebar.button("Izrakstīties", icon="↪", on_click=izrakstit_lietotaju, args=(sikdatne,))
 

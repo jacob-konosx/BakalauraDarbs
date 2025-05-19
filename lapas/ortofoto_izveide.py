@@ -9,11 +9,9 @@ if "uzdevuma_id" not in st.session_state:
     st.session_state.uzdevums_aktivs = False
     st.session_state.uzdevums_augsupielade = False
 
-
 def atiestatit_datus():
     st.session_state.uzdevuma_id = None
     st.session_state.uzdevums_aktivs = False
-    st.rerun()
 
 def generet_karti(faili, kartes_nosaukums, ortofoto_izskirtspeja, izveletais_datums):
     dati = izveidot_karti(kartes_nosaukums, ortofoto_izskirtspeja)
@@ -70,7 +68,9 @@ elif st.session_state.uzdevums_aktivs:
         with col1:
             progresa_josla = st.progress(0, text=progresa_text)
         with col2:
-            st.button("Atcelt kartes izveidi", on_click=atcelt_uzdevumu, icon="❌")
+            col1_placeholder = st.empty()
+            with col1_placeholder:
+                st.button("Atcelt kartes izveidi", on_click=atcelt_uzdevumu, icon="❌")
 
         uzdevuma_dati = dabut_uzdevuma_info_pec_id(st.session_state.uzdevuma_id)
         if uzdevuma_dati:
@@ -81,12 +81,15 @@ elif st.session_state.uzdevums_aktivs:
                 time.sleep(5)
                 uzdevuma_dati = dabut_uzdevuma_info_pec_id(st.session_state.uzdevuma_id)
             else:
-
                 st.toast("Karte tika veiksmīgi izveidota.", icon="✅")
+                progresa_josla.progress(1.0, text=progresa_text)
                 atiestatit_datus()
-                st.switch_page("lapas/ortofoto_parvalde.py")
+
+                with col1_placeholder:
+                    st.page_link("lapas/ortofoto_parvalde.py", label="Apskatīt izveidoto karti", icon="🗺️")
         else:
             atiestatit_datus()
+            st.rerun()
 else:
     with ievades_bloks.container():
         kartes_nosaukums = st.text_input("Kartes Nosaukums", placeholder="Ievadiet kartes nosaukumu", max_chars=100)
