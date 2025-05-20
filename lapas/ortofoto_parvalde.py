@@ -57,7 +57,7 @@ def dzest_koordinatu(sensora_id):
 
 @st.dialog("Izvēlaties GeoTIFF kartes failu")
 def izvēlēties_failu():
-    st.warning("Kartes operācijas ar GeoTIFF failu būs ievērojami lēnākas nekā caur sistēmas kartes izveides procesu!", icon="⚠️")
+    st.warning("Kartes operācijas ar GeoTIFF failu būs ievērojami lēnākas nekā caur sistēmas kartes izveides procesu! Kā arī sensoru koordinātas saglabāšana un NDVI karte nebūs pieejama!", icon="⚠️")
     st.page_link("lapas/ortofoto_izveide.py", label="Doties uz kartes izveidi", icon="🪡")
 
     izveletais_datums = st.date_input("Izvēlaties ortofoto datumu:", format="DD.MM.YYYY", value=None)
@@ -203,9 +203,19 @@ else:
                 with col2:
                     st.text(f"{dt.strftime('%d.%m.%Y %H:%M')} ⚙️: {5-uzdevums['options'][0]['value']}")
                 with col3:
-                    st.button("🗺️", key="izvele_"+uzdevuma_id, disabled=not uzdevums["status"]==40, help="Atvērt ortofoto karti" if uzdevums["status"]==40 else "Karte tiek izveidota", on_click=izveleties_karti, args=(uzdevuma_id,))
+                    st.button("🗺️", key="izvele_"+uzdevuma_id,
+                        disabled=not uzdevums["status"]==40,
+                        help="Atvērt ortofoto karti" if uzdevums["status"]==40 else "Karte tiek izveidota",
+                        on_click=izveleties_karti,
+                        args=(uzdevuma_id,)
+                    )
                 with col4:
-                    st.button("💾", key="lejup_"+uzdevuma_id, disabled=not uzdevums["status"]==40, on_click=lejupladet_karti, args=(uzdevuma_id, uzdevums["name"]), help="Saglabāt GeoTIFF failu")
+                    st.button("💾", key="lejup_"+uzdevuma_id,
+                        disabled=not uzdevums["status"]==40,
+                        on_click=lejupladet_karti,
+                        args=(uzdevuma_id, uzdevums["name"]),
+                        help="Saglabāt GeoTIFF failu"
+                    )
                 with col5:
                     st.button("🗑️", key="dzest_"+uzdevuma_id, on_click=izdzest_karti, args=(uzdevuma_id,), help="Dzēst GeoTIFF karti")
     else:

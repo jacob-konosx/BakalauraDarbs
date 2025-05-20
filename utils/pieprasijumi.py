@@ -6,7 +6,6 @@ ODM_IESTATIJUMI = [
     {'name': "sfm-algorithm", 'value': "planar"},
     {'name': "fast-orthophoto", 'value': True},
     {'name': "matcher-neighbors", 'value': 4},
-    {'name': "pc-quality", 'value': "high"},
     {'name': "tiles", 'value': True}
 ]
 
