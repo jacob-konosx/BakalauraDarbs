@@ -1,4 +1,4 @@
-import datetime
+import datetime, json
 from streamlit_folium import st_folium, folium_static
 import streamlit as st
 from utils.sensoru_dati import zimet_sensora_datus, dabut_visus_sensora_ierakstus, ieladet_sensora_datus
@@ -43,7 +43,7 @@ if "odm_uzdevumi" not in st.session_state:
 
 def izveleties_karti(uzdevuma_id):
     odm_uzdevums = dabut_uzdevuma_info_pec_id(uzdevuma_id)
-    db_odm_uzdevums = db_dabut_odm_uzdevumu_pec_id(odm_uzdevums["id"])
+    db_odm_uzdevums = db_dabut_odm_uzdevumu_pec_id(uzdevuma_id)
 
     if db_odm_uzdevums:
         st.session_state.ortofoto_sensora_datums = db_odm_uzdevums["datums"]
@@ -128,7 +128,7 @@ if st.session_state.tif_fails or st.session_state.odm_uzdevums:
             st.session_state.izveleta_koordinate,
             st.session_state.sensora_ierices,
             st.session_state.ortofoto_sensora_laiks,
-            st.session_state.galvene,
+            json.loads(st.session_state.sikdatne["galvene"]),
             st.session_state.odm_uzdevums,
             st.session_state.tif_fails
         )

@@ -108,7 +108,7 @@ def izveidot_karti(izveleta_koordinate, visas_sensora_ierices, ortofoto_sensora_
 
     ortofoto = None
     if odm_uzdevums:
-        ortofoto_flizes_url = f"{st.secrets.odm_url}/projects/{st.session_state.odm_projekta_id}/tasks/{odm_uzdevums['id']}/orthophoto/tiles/{{z}}/{{x}}/{{y}}?jwt={galvene['Authorization'].replace('JWT ', '')}"
+        ortofoto_flizes_url = f"{st.secrets.odm_url}/projects/{st.session_state.sikdatne['odm_projekta_id']}/tasks/{odm_uzdevums['id']}/orthophoto/tiles/{{z}}/{{x}}/{{y}}?jwt={galvene['Authorization'].replace('JWT ', '')}"
 
         ortofoto = folium.TileLayer(
             tiles=ortofoto_flizes_url,

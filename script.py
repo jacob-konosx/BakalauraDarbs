@@ -1,7 +1,7 @@
 import json
 import streamlit as st
 from st_cookies_manager import EncryptedCookieManager
-from utils.pieprasijumi import dabut_galveni, izveidot_projektu
+from utils.pieprasijumi import iestatit_galveni, izveidot_projektu
 from utils.stils import dabut_stilu
 from utils.db import db_dabut_lietotaju_pec_epasta, db_vai_pilnvarots_epasts, db_izveidot_lietotaju
 
@@ -13,22 +13,10 @@ st.markdown(stils, unsafe_allow_html=True)
 if "izrakstities" not in st.session_state:
     st.session_state.izrakstities = False
 
-def izrakstit_lietotaju(sikdatne):
-    sikdatne["odm_projekta_id"] = ""
-    sikdatne["galvene"] = ""
+def izrakstit_lietotaju():
+    st.session_state.sikdatne["odm_projekta_id"] = ""
+    st.session_state.sikdatne["galvene"] = ""
     st.session_state.izrakstities = True
-    st.rerun()
-
-def iestatit_galveni(sikdatne):
-    galvene = dabut_galveni()
-
-    if galvene:
-        sikdatne["galvene"] = json.dumps(galvene)
-        st.toast("WebODM savienots veiksmīgi.", icon="✅")
-    else:
-        st.toast("Neizdevās savienoties ar WebODM.", icon="❌")
-
-    return galvene
 
 sikdatne = EncryptedCookieManager(
     prefix="st_",
@@ -47,15 +35,18 @@ else:
         st.logout()
 
     if "galvene" not in sikdatne or not sikdatne["galvene"]:
-        galvene = iestatit_galveni(sikdatne)
-        if not galvene:
+        ir_galvene_iestatita = iestatit_galveni()
+
+        if ir_galvene_iestatita:
+            st.toast("WebODM savienots veiksmīgi.", icon="✅")
+        else:
+            st.toast("Neizdevās savienoties ar WebODM.", icon="❌")
+
             st.header("Neizdevās savienot ar ODM API.")
             st.text("ODM ir kritiska sistēmas komponente. Lūdzu mēģiniet savienoties, lai turpinātu tīmekļa vietnes darbību.")
             if st.button("Savienot ar ODM", icon="🔄"):
                 st.rerun()
             st.stop()
-    if "galvene" not in st.session_state:
-        st.session_state.galvene = json.loads(sikdatne["galvene"])
 
     if "odm_projekta_id" not in sikdatne or not sikdatne["odm_projekta_id"]:
         projekta_id = None
@@ -78,12 +69,9 @@ else:
             projekta_id = db_lietotajs["projekta_id"]
 
         sikdatne["odm_projekta_id"] = str(projekta_id)
-    if "odm_projekta_id" not in st.session_state:
-        st.session_state.odm_projekta_id = sikdatne["odm_projekta_id"]
 
-    st.sidebar.button("Atiestatīt WebODM žetonu", icon="🔄", on_click=iestatit_galveni, args=(sikdatne,), help="Izmantojiet, ja ortofoto netiek vizualizēts korekti.")
     st.sidebar.header(f"Sveicināti, :blue[{st.user.name}]!")
-    st.sidebar.button("Izrakstīties", icon="↪", on_click=izrakstit_lietotaju, args=(sikdatne,))
+    st.sidebar.button("Izrakstīties", icon="↪", on_click=izrakstit_lietotaju)
 
     ortofoto_izveide = st.Page("lapas/ortofoto_izveide.py", title="Ortofoto izveide", icon="🪡")
     ortofoto_parvalde = st.Page("lapas/ortofoto_parvalde.py", title="Mani ortofoto", icon="🗺️")
