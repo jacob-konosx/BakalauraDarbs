@@ -11,6 +11,5 @@ st.date_input("Ievadiet sensoru datu datuma diapzonu:", format="DD.MM.YYYY", key
 
 if len(st.session_state.datuma_diapzona) == 2:
     st.session_state.sensora_dati = dabut_visus_sensora_ierakstus(st.session_state.datuma_diapzona)
-
 if st.session_state.sensora_dati:
     zimet_sensora_datus(st.session_state.sensora_dati)

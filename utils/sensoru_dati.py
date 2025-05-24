@@ -53,7 +53,6 @@ def dabut_visus_sensora_ierakstus(datumu_diapzona):
         sensora_dati = dabut_sensora_datus(st.secrets.sensoru_datu_url.format(str_diapzona[0], str_diapzona[1]))
 
         visi_ieraksti += sensora_dati["items"]
-
         while sensora_dati["hasMore"]:
             jaunais_datu_url = [link for link in sensora_dati["links"] if "next" in link["rel"]]
 
@@ -69,28 +68,31 @@ def dabut_visus_sensora_ierakstus(datumu_diapzona):
     except:
         st.toast("Neizdevās pieprasīt sensora datus.", icon="🚨")
 
-def zimet_sensora_datus(sensora_dati):
+@st.cache_data
+def iestatit_df(sensora_dati):
     df = pd.DataFrame(sensora_dati)
 
-    df["s_date"] = pd.to_datetime(df["s_date"], utc=True).dt.tz_localize(None)
+    df["Datums"] = pd.to_datetime(df["s_date"], utc=True).dt.tz_localize(None)
+    df["Sensora ID"] = df["device id"]
 
-    numeric_cols = ["air temperature", "air humidity", "soil temperature 1", "soil temperature 2", "soil moisture 1", "soil moisture 2"]
-    df[numeric_cols] = df[numeric_cols].astype(float)
+    df[list(opcijas.values())] = df[list(opcijas.keys())].astype(float)
 
+    return df
+
+def zimet_sensora_datus(sensora_dati):
+    df = iestatit_df(sensora_dati)
     izveleta_opcija = st.selectbox("Datu kategorijas: ", list(opcijas.values()))
 
-    opcija = list(opcijas.keys())[list(opcijas.values()).index(izveleta_opcija)]
-
-    chart = (
+    diagramma = (
         alt.Chart(df)
         .mark_line(point=True)
         .encode(
-            x=alt.X("s_date:T", title="Laiks", axis=alt.Axis(format="%H:%M")),
-            y=alt.Y(opcija + ":Q", title=izveleta_opcija),
-            color=alt.Color("device id:N", title="Ierīces ID"),
-            tooltip=["s_date:T", opcija + ":Q", "device id:N"]
+            x=alt.X("Datums:T", title="Laiks", axis=alt.Axis(format="%H:%M")),
+            y=alt.Y(izveleta_opcija + ":Q", title=izveleta_opcija),
+            color=alt.Color("Sensora ID:N", title="Sensoru ID"),
+            tooltip=["Datums:T", izveleta_opcija + ":Q", "Sensora ID:N"]
         )
         .interactive()
     )
 
-    st.altair_chart(chart)
+    st.altair_chart(diagramma)

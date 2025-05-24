@@ -6,7 +6,7 @@ from utils.pieprasijumi import dabut_lietotaja_uzdevumus, lejupladet_tif_pec_id,
 from utils.db import db_dabut_odm_uzdevumu_pec_id, db_atjauninat_odm_uzdevuma_datumu_pec_id, db_atjauninat_sensora_koordinatas_pec_id, db_dzest_sensora_koordinatas_pec_uzdevuma_id, db_dzest_odm_uzdevumu_pec_id
 from utils.karte import izveidot_karti
 
-KARTES_AUGSTUMS = 600
+KARTES_AUGSTUMS = 700
 
 def uzstadit_state():
     st.session_state.ortofoto_sensora_datums = None
@@ -24,8 +24,8 @@ def apstiprinat_koordinatu(sensora_id):
         db_atjauninat_sensora_koordinatas_pec_id(st.session_state.odm_uzdevums["id"], sensora_id, st.session_state.izveleta_koordinate)
 
     st.session_state.spiediena_rezims = False
-    st.session_state.sensora_ierices[sensora_id]["koordinatas"] = st.session_state.izveleta_koordinate
     st.session_state.izveleta_koordinate = None
+    st.session_state.sensora_ierices[sensora_id]["koordinatas"] = st.session_state.izveleta_koordinate
 
 def tif_datuma_izmaina():
     st.session_state.ortofoto_sensora_laiks = datetime.time(0, 0)
@@ -55,9 +55,16 @@ def dzest_koordinatu(sensora_id):
     if st.session_state.odm_uzdevums:
         db_atjauninat_sensora_koordinatas_pec_id(st.session_state.odm_uzdevums["id"], sensora_id, [None, None])
 
+def uzstadit_uzdevumu_sarakstu():
+    odm_uzdevumi= dabut_lietotaja_uzdevumus()
+
+    if odm_uzdevumi:
+        odm_uzdevumi.sort(key=lambda uzdevums: uzdevums["created_at"], reverse=True)
+        st.session_state.odm_uzdevumi = odm_uzdevumi
+
 @st.dialog("Izvēlaties GeoTIFF kartes failu")
 def izvēlēties_failu():
-    st.warning("Kartes operācijas ar GeoTIFF failu būs ievērojami lēnākas nekā caur sistēmas kartes izveides procesu! Kā arī sensoru koordinātas saglabāšana un NDVI karte nebūs pieejama!", icon="⚠️")
+    st.warning("Kartes operācijas ar GeoTIFF failu būs ievērojami lēnākas nekā caur sistēmas kartes izveides procesu! Kā arī sensoru koordinātas saglabāšana un VARI karte nebūs pieejama!", icon="⚠️")
     st.page_link("lapas/ortofoto_izveide.py", label="Doties uz kartes izveidi", icon="🪡")
 
     izveletais_datums = st.date_input("Izvēlaties ortofoto datumu:", format="DD.MM.YYYY", value=None)
@@ -103,7 +110,7 @@ if st.session_state.tif_fails or st.session_state.odm_uzdevums:
         if st.session_state.ortofoto_sensora_dati:
             ieladet_sensora_datus()
 
-    kartes_cilne, sensora_datu_cilne = st.tabs(["Karte", "Sensora dati"])
+    kartes_cilne, sensoru_datu_cilne = st.tabs(["Karte", "Sensoru dati"])
 
     with kartes_cilne:
         datumu_kolonna, laika_kolonna, tuksa_kolonna, atiestatit_kolona = st.columns([3, 3, 8, 1])
@@ -174,7 +181,7 @@ if st.session_state.tif_fails or st.session_state.odm_uzdevums:
                 dzesama_sensora_id = st.selectbox("Izvēlaties sensoru, kuram dzēst koordinātu:", ar_koordinatas_sensoru_id)
                 st.button("Dzēst koordinātu", icon="🗑️", on_click=dzest_koordinatu, args=(dzesama_sensora_id, ))
 
-    with sensora_datu_cilne:
+    with sensoru_datu_cilne:
         if st.session_state.ortofoto_sensora_dati:
             st.subheader(f"Sensora dati datumā: {st.session_state.ortofoto_sensora_datums}")
             zimet_sensora_datus(st.session_state.ortofoto_sensora_dati)
@@ -184,12 +191,12 @@ else:
     st.title("Manas ortofoto kartes")
     datu_atjauninasanas_kolonna, tuksa_kolonna, tif_izveles_kolonna = st.columns([1.5, 5, 1.5])
     with datu_atjauninasanas_kolonna:
-        st.button("Atjaunināt", on_click=lambda: st.session_state.update(odm_uzdevumi=dabut_lietotaja_uzdevumus()), icon="🔄")
+        st.button("Atjaunināt", on_click=uzstadit_uzdevumu_sarakstu, icon="🔄")
     with tif_izveles_kolonna:
         st.button("Atvērt GeoTIFF", icon="📂", on_click=izvēlēties_failu)
 
     if not st.session_state.odm_uzdevumi:
-        st.session_state.odm_uzdevumi= dabut_lietotaja_uzdevumus()
+        uzstadit_uzdevumu_sarakstu()
 
     if st.session_state.odm_uzdevumi:
         for i, uzdevums in enumerate(st.session_state.odm_uzdevumi):

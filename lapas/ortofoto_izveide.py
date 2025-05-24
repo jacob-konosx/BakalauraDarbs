@@ -81,7 +81,7 @@ elif st.session_state.uzdevums_aktivs:
                 time.sleep(5)
                 uzdevuma_dati = dabut_uzdevuma_info_pec_id(st.session_state.uzdevuma_id)
             else:
-                st.toast("Karte tika veiksmīgi izveidota.", icon="✅")
+                st.toast("Ortofoto tika veiksmīgi izveidots.", icon="✅")
                 progresa_josla.progress(1.0, text=progresa_text)
                 atiestatit_datus()
 
