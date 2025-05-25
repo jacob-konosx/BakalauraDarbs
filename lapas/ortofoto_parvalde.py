@@ -23,9 +23,9 @@ def apstiprinat_koordinatu(sensora_id):
     if st.session_state.odm_uzdevums:
         db_atjauninat_sensora_koordinatas_pec_id(st.session_state.odm_uzdevums["id"], sensora_id, st.session_state.izveleta_koordinate)
 
+    st.session_state.sensora_ierices[sensora_id]["koordinatas"] = st.session_state.izveleta_koordinate
     st.session_state.spiediena_rezims = False
     st.session_state.izveleta_koordinate = None
-    st.session_state.sensora_ierices[sensora_id]["koordinatas"] = st.session_state.izveleta_koordinate
 
 def tif_datuma_izmaina():
     st.session_state.ortofoto_sensora_laiks = datetime.time(0, 0)
