@@ -49,8 +49,7 @@
 
 - Python 3.10+
 - PostgreSQL datu bāze ar struktūru:
-  
-![PostgreSQL ER](screenshots/PostgreSQLERDiagramma.png 'PostgreSQL ER')
+    ![PostgreSQL ER](screenshots/PostgreSQLERDiagramma.png 'PostgreSQL ER')
 - WebODM Docker instance (seko: https://github.com/OpenDroneMap/WebODM?tab=readme-ov-file#manual-installation-docker)
 - Google OAuth 2.0 klienta ID un noslēpums
 - Sensora datu API serveris, kas atbilst bakalaura darbā aprakstītai struktūrai
