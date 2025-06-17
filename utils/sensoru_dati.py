@@ -2,8 +2,8 @@ import datetime
 import streamlit as st
 import pandas as pd
 import altair as alt
-from utils.pieprasijumi import dabut_sensora_datus
-from utils.db import db_dabut_sensoru_koordinatas_pec_uzdevuma_id, db_izveidot_sensoru_koordinatas
+from api.pieprasijumi import dabut_sensora_datus
+from db.db import db_dabut_sensoru_koordinatas_pec_uzdevuma_id, db_izveidot_sensoru_koordinatas
 
 opcijas = {
     "air temperature": "Gaisa Temperatūra (°C)",
@@ -88,9 +88,14 @@ def zimet_sensora_datus(sensora_dati):
         .mark_line(point=True)
         .encode(
             x=alt.X("Datums:T", title="Laiks", axis=alt.Axis(format="%H:%M")),
-            y=alt.Y(izveleta_opcija + ":Q", title=izveleta_opcija),
+            y=alt.Y(f"{izveleta_opcija}:Q", title=izveleta_opcija),
             color=alt.Color("Sensora ID:N", title="Sensoru ID"),
-            tooltip=["Datums:T", izveleta_opcija + ":Q", "Sensora ID:N"]
+            tooltip=[
+                alt.Tooltip('Datums:T', title='Laiks', format='%H:%M:%S'),
+                "Datums:T",
+                f"{izveleta_opcija}:Q",
+                "Sensora ID:N"
+            ]
         )
         .interactive()
     )

@@ -1,9 +1,9 @@
 import json
 import streamlit as st
 from st_cookies_manager import EncryptedCookieManager
-from utils.pieprasijumi import iestatit_galveni, izveidot_projektu
+from api.pieprasijumi import iestatit_galveni, izveidot_projektu
 from utils.stils import dabut_stilu
-from utils.db import db_dabut_lietotaju_pec_epasta, db_vai_pilnvarots_epasts, db_izveidot_lietotaju
+from db.db import db_dabut_lietotaju_pec_epasta, db_vai_pilnvarots_epasts, db_izveidot_lietotaju
 
 st.set_page_config(layout="wide")
 
@@ -73,9 +73,9 @@ else:
     st.sidebar.header(f"Sveicināti, :blue[{st.user.name}]!")
     st.sidebar.button("Izrakstīties", icon="↪", on_click=izrakstit_lietotaju)
 
-    ortofoto_izveide = st.Page("lapas/ortofoto_izveide.py", title="Ortofoto izveide", icon="🪡")
-    ortofoto_parvalde = st.Page("lapas/ortofoto_parvalde.py", title="Mani ortofoto", icon="🗺️")
-    sensoru_dati = st.Page("lapas/sensoru_dati.py", title="Sensoru dati", icon="📡")
+    ortofoto_izveide = st.Page("pages/ortofoto_izveide.py", title="Ortofoto izveide", icon="🪡")
+    ortofoto_parvalde = st.Page("pages/ortofoto_parvalde.py", title="Mani ortofoto", icon="🗺️")
+    sensoru_dati = st.Page("pages/sensoru_dati.py", title="Sensoru dati", icon="📡")
     pg = st.navigation({"Ortofoto": [ortofoto_izveide, ortofoto_parvalde], "Sensora Dati": [sensoru_dati]})
 
     pg.run()

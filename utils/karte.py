@@ -164,7 +164,8 @@ def izveidot_karti(izveleta_koordinate, visas_sensora_ierices, ortofoto_sensora_
                         slani[merijuma_nosaukums] = folium.FeatureGroup(
                             name=datu_nosaukums,
                             show=True if "air temperature" in merijuma_nosaukums else False,
-                            overlay=True
+                            overlay=True,
+                            zindex=10
                         ).add_to(m)
 
                     merijuma_vertiba = sensoru_datu_ieraksts[merijuma_nosaukums]
@@ -180,7 +181,7 @@ def izveidot_karti(izveleta_koordinate, visas_sensora_ierices, ortofoto_sensora_
                         fill_opacity=0.2,
                         popup=f"{datu_nosaukums}: {merijuma_vertiba}",
                         weight=1,
-                        tooltip=vertibas_virkne
+                        tooltip=vertibas_virkne,
                     ).add_to(slani.get(merijuma_nosaukums))
 
             folium.Circle(
@@ -189,7 +190,7 @@ def izveidot_karti(izveleta_koordinate, visas_sensora_ierices, ortofoto_sensora_
                 fill_opacity=0,
                 popup=f"Ierīce: {sensora_ierices_id}, Koordinātas: {sensora_datu_ieraksts['koordinatas']}",
                 fill=True,
-                zindex=10
+                zindex=20
             ).add_to(m)
 
         if sensora_ierices_ar_koord:
